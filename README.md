@@ -7,7 +7,7 @@
 ## 📌 Introdução
 A **QI Credit** é uma plataforma criada para integrar o hub de soluções financeiras da QI Tech.
 
-Hoje a QI Tech já possui APIs maduras para análise de crédito B2B/P2P entre empresas, mas falta uma **porta de entrada transparente** com execução on-chain e escrow automatizado para operações P2P voltadas a indivíduos (PF) — nosso foco nesta proposta é **implementar smart contracts obrigatórios para execução via escrow** e **registro hash-only em blockchain** para garantir transparência e rastreabilidade.
+Hoje a QI Tech já possui APIs maduras para análise de crédito B2B/P2P entre empresas, mas falta uma **porta de entrada transparente** com execução on-chain e escrow automatizado para operações P2P — nosso foco nesta proposta é **implementar smart contracts obrigatórios para execução via escrow** e **registro hash-only em blockchain** para garantir transparência e rastreabilidade.
 
 ### 4 pilares da plataforma
 - **Smart Contracts:** automação do escrow e execução contratual (OBRIGATÓRIO).  
@@ -53,7 +53,7 @@ HACKATHON-BH
 - **Linguagens:** Rust / Solidity (smart contracts), Node.js (backend orchestration).
 
 ### Frontend
-- **React.js** (UI/UX), Tailwind para estilo (opcional).
+- **React.js** (UI/UX), Tailwind e React para estilo.
 
 ---
 
@@ -70,7 +70,7 @@ HACKATHON-BH
 
 ---
 
-## 🔒 Escrow + Smart Contracts (OBRIGATÓRIO)
+## 🔒 Escrow + Smart Contracts
 **Conceito:**  
 - O smart contract atua como escrow: recebe depósitos dos investidores, mantém fundos bloqueados até que condições (KYC, score, assinatura) sejam satisfeitas e executa liberação, penalidades ou reembolso automaticamente.  
 - O registro na blockchain será **hash-only** (eventHash) para preservar privacidade e garantir auditabilidade.
@@ -167,10 +167,10 @@ contract SimpleEscrow {
 ---
 
 ## 🖼️ Diagramas
-- Fluxo geral do contrato inteligente e escrow.  
-- Fluxo investidor ↔ tomador ↔ QI Tech.
+- [Fluxo de Aplicação] (fluxoaplicacao.png)
 
-> **TODO:** Incluir diagramas em Mermaid e as imagens anexadas: `fluxobackend.jpeg`, `apifluxo.jpeg`. (Referenciar/embutir os arquivos no diretório `/docs`).
+- Fluxo de API.
+[Fluxo de API] (fluxoapi.png)
 
 ---
 
@@ -217,13 +217,6 @@ contract SimpleEscrow {
 ## ▶️ How to Run / Demo Script
 > **TODO:** Incluir passo-a-passo detalhado para demo:
 - Ex.: 1) criar investidor → 2) criar loanId → 3) investidor `deposit(loanId)` (hold) → 4) tomador onboarding + credit_analysis → 5) plataforma chama `release(loanId)` → 6) registrar pagamentos.
-
----
-
-## 📦 Entregáveis do Hackathon (MVP)
-- Implementação do fluxo on-chain básico (`createLoan`, `deposit`, `release`, `refund`) + integração com APIs QI Tech (onboarding + credit_analysis) em ambiente sandbox.  
-- UI mínima: dashboard para investidor e tomador exibindo status do escrow e eventos (hashes).  
-- Documentação mínima com exemplos (placeholder para curl/JSON) e diagramas (placeholder para Mermaid + imagens).
 
 ---
 
