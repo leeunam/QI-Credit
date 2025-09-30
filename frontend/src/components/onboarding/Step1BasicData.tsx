@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { submitBasicData } from '@/services/onboardingService';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { validationUtils } from '@/lib/validationUtils';
 
 export const Step1BasicData: React.FC = () => {
   const { data, updateData, nextStep } = useOnboarding();
@@ -17,26 +18,28 @@ export const Step1BasicData: React.FC = () => {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!data.fullName || data.fullName.length < 3) {
-      newErrors.fullName = 'Nome deve ter pelo menos 3 caracteres';
+    // Validação do nome completo
+    const nameValidation = validationUtils.validateFullName(data.fullName);
+    if (!nameValidation.isValid) {
+      newErrors.fullName = nameValidation.message!;
     }
 
-    if (!data.document) {
-      newErrors.document = 'CPF/CNPJ é obrigatório';
-    } else if (data.document.replace(/\D/g, '').length < 11) {
-      newErrors.document = 'CPF/CNPJ inválido';
+    // Validação do CPF/CNPJ
+    const documentValidation = validationUtils.validateDocument(data.document);
+    if (!documentValidation.isValid) {
+      newErrors.document = documentValidation.message!;
     }
 
-    if (!data.email) {
-      newErrors.email = 'Email é obrigatório';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
-      newErrors.email = 'Email inválido';
+    // Validação do email
+    const emailValidation = validationUtils.validateEmail(data.email);
+    if (!emailValidation.isValid) {
+      newErrors.email = emailValidation.message!;
     }
 
-    if (!data.password) {
-      newErrors.password = 'Senha é obrigatória';
-    } else if (data.password.length < 8) {
-      newErrors.password = 'Senha deve ter pelo menos 8 caracteres';
+    // Validação da senha
+    const passwordValidation = validationUtils.validatePassword(data.password);
+    if (!passwordValidation.isValid) {
+      newErrors.password = passwordValidation.message!;
     }
 
     setErrors(newErrors);
@@ -56,6 +59,7 @@ export const Step1BasicData: React.FC = () => {
       const response = await submitBasicData({
         fullName: data.fullName,
         document: data.document,
+        documentType: data.documentType,
         email: data.email,
         password: data.password,
       });
@@ -101,14 +105,25 @@ export const Step1BasicData: React.FC = () => {
             id="fullName"
             type="text"
             value={data.fullName}
-            onChange={(e) => updateData({ fullName: e.target.value })}
+            onChange={(e) => {
+              const filteredValue = validationUtils.onlyLetters(e.target.value);
+              if (filteredValue.length <= 255) {
+                updateData({ fullName: filteredValue });
+              }
+            }}
             placeholder="Digite seu nome completo"
             className="mt-2"
+            maxLength={255}
             aria-invalid={!!errors.fullName}
           />
-          {errors.fullName && (
-            <p className="text-body-4 text-error mt-1">{errors.fullName}</p>
-          )}
+          <div className="flex justify-between items-center mt-1">
+            {errors.fullName && (
+              <p className="text-body-4 text-destructive">{errors.fullName}</p>
+            )}
+            <p className="text-body-4 text-muted-foreground text-right">
+              {data.fullName.length}/255
+            </p>
+          </div>
         </div>
 
         <div>
@@ -116,15 +131,31 @@ export const Step1BasicData: React.FC = () => {
           <Input
             id="document"
             type="text"
-            value={data.document}
-            onChange={(e) => updateData({ document: e.target.value })}
-            placeholder="000.000.000-00"
+            value={validationUtils.formatDocument(data.document)}
+            onChange={(e) => {
+              const numbersOnly = validationUtils.onlyNumbers(e.target.value);
+              if (numbersOnly.length <= 14) {
+                // Determina automaticamente o tipo de pessoa
+                const documentType = numbersOnly.length === 11 ? 'F' : numbersOnly.length === 14 ? 'J' : undefined;
+                updateData({ 
+                  document: numbersOnly,
+                  documentType: documentType
+                });
+              }
+            }}
+            placeholder="000.000.000-00 ou 00.000.000/0000-00"
             className="mt-2"
+            maxLength={18} // Para comportar a formatação
             aria-invalid={!!errors.document}
           />
-          {errors.document && (
-            <p className="text-body-4 text-error mt-1">{errors.document}</p>
-          )}
+          <div className="flex justify-between items-center mt-1">
+            {errors.document && (
+              <p className="text-body-4 text-destructive">{errors.document}</p>
+            )}
+            <p className="text-body-4 text-muted-foreground text-right">
+              {data.document.length <= 11 ? 'CPF' : 'CNPJ'} - {data.document.length}/14
+            </p>
+          </div>
         </div>
 
         <div>
@@ -133,14 +164,24 @@ export const Step1BasicData: React.FC = () => {
             id="email"
             type="email"
             value={data.email}
-            onChange={(e) => updateData({ email: e.target.value })}
+            onChange={(e) => {
+              if (e.target.value.length <= 255) {
+                updateData({ email: e.target.value });
+              }
+            }}
             placeholder="seu@email.com"
             className="mt-2"
+            maxLength={255}
             aria-invalid={!!errors.email}
           />
-          {errors.email && (
-            <p className="text-body-4 text-error mt-1">{errors.email}</p>
-          )}
+          <div className="flex justify-between items-center mt-1">
+            {errors.email && (
+              <p className="text-body-4 text-destructive">{errors.email}</p>
+            )}
+            <p className="text-body-4 text-muted-foreground text-right">
+              {data.email.length}/255
+            </p>
+          </div>
         </div>
 
         <div>
@@ -150,9 +191,15 @@ export const Step1BasicData: React.FC = () => {
               id="password"
               type={showPassword ? 'text' : 'password'}
               value={data.password}
-              onChange={(e) => updateData({ password: e.target.value })}
-              placeholder="Mínimo 8 caracteres"
+              onChange={(e) => {
+                if (e.target.value.length <= 20) {
+                  updateData({ password: e.target.value });
+                }
+              }}
+              placeholder="8 a 20 caracteres"
               className="pr-10"
+              maxLength={20}
+              minLength={8}
               aria-invalid={!!errors.password}
             />
             <button
@@ -163,9 +210,14 @@ export const Step1BasicData: React.FC = () => {
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
-          {errors.password && (
-            <p className="text-body-4 text-error mt-1">{errors.password}</p>
-          )}
+          <div className="flex justify-between items-center mt-1">
+            {errors.password && (
+              <p className="text-body-4 text-destructive">{errors.password}</p>
+            )}
+            <p className="text-body-4 text-muted-foreground text-right">
+              {data.password.length}/20
+            </p>
+          </div>
         </div>
 
         <Button

@@ -19,7 +19,7 @@ const simulateDelay = (ms: number = 1000) =>
 // Toggle this to simulate API errors for testing
 const SIMULATE_ERRORS = false;
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   status: 'ok' | 'error';
   data?: T;
   message?: string;
@@ -36,6 +36,7 @@ export interface ApiResponse<T = any> {
 export async function submitBasicData(payload: {
   fullName: string;
   document: string;
+  documentType?: 'F' | 'J';
   email: string;
   password: string;
 }): Promise<ApiResponse<{ onboardingId: string; userId: string }>> {

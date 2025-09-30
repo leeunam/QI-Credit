@@ -3,7 +3,8 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 export interface OnboardingData {
   // Step 1: Basic data
   fullName: string;
-  document: string; // CPF/CNPJ
+  document: string; // CPF/CNPJ (apenas números)
+  documentType?: 'F' | 'J'; // F = Pessoa Física, J = Pessoa Jurídica
   email: string;
   password: string;
 
@@ -43,6 +44,7 @@ const OnboardingContext = createContext<OnboardingContextType | undefined>(undef
 const initialData: OnboardingData = {
   fullName: '',
   document: '',
+  documentType: undefined,
   email: '',
   password: '',
   documents: {},
