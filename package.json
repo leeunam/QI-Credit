@@ -1,0 +1,37 @@
+{
+  "name": "qi-credit",
+  "version": "0.1.0",
+  "description": "",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "npm run start:backend",
+    "start:backend": "cd backend && node server.js",
+    "dev": "npm run dev:backend",
+    "dev:backend": "cd backend && nodemon server.js",
+    "test": "npm run test:backend && npm run test:blockchain",
+    "test:backend": "cd backend && jest",
+    "test:blockchain": "cd blockchain && npx hardhat test",
+    "deploy:contracts": "cd blockchain && npx hardhat run scripts/deploy.js",
+    "setup": "sh scripts/setup.sh",
+    "docs": "docsify serve docs"
+  },
+  "keywords": [
+    "fintech",
+    "p2p",
+    "credit",
+    "blockchain",
+    "evm",
+    "smart-contracts"
+  ],
+  "author": "QI Credit Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "morgan": "^1.10.1"
+  }
+}
