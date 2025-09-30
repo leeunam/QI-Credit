@@ -39,7 +39,9 @@ interface OnboardingContextType {
   reset: () => void;
 }
 
-const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
+const OnboardingContext = createContext<OnboardingContextType | undefined>(
+  undefined
+);
 
 const initialData: OnboardingData = {
   fullName: '',
@@ -51,20 +53,22 @@ const initialData: OnboardingData = {
   documentPreviews: {},
 };
 
-export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [data, setData] = useState<OnboardingData>(initialData);
 
   const updateData = (updates: Partial<OnboardingData>) => {
-    setData(prev => ({ ...prev, ...updates }));
+    setData((prev) => ({ ...prev, ...updates }));
   };
 
   const nextStep = () => {
-    setCurrentStep(prev => Math.min(prev + 1, 4));
+    setCurrentStep((prev) => Math.min(prev + 1, 4));
   };
 
   const prevStep = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 1));
+    setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
   const reset = () => {

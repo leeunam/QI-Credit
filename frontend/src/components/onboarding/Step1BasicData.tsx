@@ -136,10 +136,15 @@ export const Step1BasicData: React.FC = () => {
               const numbersOnly = validationUtils.onlyNumbers(e.target.value);
               if (numbersOnly.length <= 14) {
                 // Determina automaticamente o tipo de pessoa
-                const documentType = numbersOnly.length === 11 ? 'F' : numbersOnly.length === 14 ? 'J' : undefined;
-                updateData({ 
+                const documentType =
+                  numbersOnly.length === 11
+                    ? 'F'
+                    : numbersOnly.length === 14
+                    ? 'J'
+                    : undefined;
+                updateData({
                   document: numbersOnly,
-                  documentType: documentType
+                  documentType: documentType,
                 });
               }
             }}
@@ -153,7 +158,8 @@ export const Step1BasicData: React.FC = () => {
               <p className="text-body-4 text-destructive">{errors.document}</p>
             )}
             <p className="text-body-4 text-muted-foreground text-right">
-              {data.document.length <= 11 ? 'CPF' : 'CNPJ'} - {data.document.length}/14
+              {data.document.length <= 11 ? 'CPF' : 'CNPJ'} -{' '}
+              {data.document.length}/14
             </p>
           </div>
         </div>
@@ -220,12 +226,7 @@ export const Step1BasicData: React.FC = () => {
           </div>
         </div>
 
-        <Button
-          type="submit"
-          className="w-full"
-          size="lg"
-          disabled={loading}
-        >
+        <Button type="submit" className="w-full" size="lg" disabled={loading}>
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -9,7 +9,7 @@ import {
   type CreditOffer,
   type MarketplaceFilters as FilterType,
 } from '@/services/marketplaceService';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 
 /**
  * Página de Marketplace P2P
@@ -20,6 +20,7 @@ export default function Marketplace() {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<FilterType>({});
   const [isMobile, setIsMobile] = useState(false);
+  const { toast } = useToast();
 
   // Detecta tamanho da tela para layout responsivo
   useEffect(() => {
@@ -35,7 +36,7 @@ export default function Marketplace() {
   // Carrega ofertas iniciais
   useEffect(() => {
     loadOffers();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadOffers = async (newFilters?: FilterType) => {
     setLoading(true);
@@ -44,7 +45,11 @@ export default function Marketplace() {
       const data = await getCreditOffers(newFilters);
       setOffers(data);
     } catch (error) {
-      toast.error('Erro ao carregar ofertas. Tente novamente.');
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Erro ao carregar ofertas. Tente novamente.',
+      });
       console.error('Erro ao carregar ofertas:', error);
     } finally {
       setLoading(false);
@@ -54,18 +59,27 @@ export default function Marketplace() {
   const handleFilterChange = (newFilters: FilterType) => {
     setFilters(newFilters);
     loadOffers(newFilters);
-    toast.success('Filtros aplicados com sucesso!');
+    toast({
+      title: 'Sucesso',
+      description: 'Filtros aplicados com sucesso!',
+    });
   };
 
   const handleClearFilters = () => {
     setFilters({});
     loadOffers({});
-    toast.info('Filtros removidos');
+    toast({
+      title: 'Filtros removidos',
+      description: 'Todos os filtros foram removidos.',
+    });
   };
 
   const handleInvest = (offerId: string) => {
     // TODO: Implementar lógica de investimento quando backend estiver pronto
-    toast.success(`Redirecionando para investimento na oferta ${offerId}...`);
+    toast({
+      title: 'Investimento',
+      description: `Redirecionando para investimento na oferta ${offerId}...`,
+    });
     console.log('Investir em oferta:', offerId);
   };
 
@@ -76,9 +90,7 @@ export default function Marketplace() {
         <div className="container mx-auto px-4 py-6 desktop-sm:py-8">
           <div className="flex items-center gap-3 mb-2">
             <TrendingUp className="w-8 h-8 text-primary" />
-            <h1 className="text-heading-1 text-card-foreground">
-              Marketplace P2P
-            </h1>
+            <h1 className="text-h1 text-card-foreground">Marketplace P2P</h1>
           </div>
           <p className="text-body-2 text-muted-foreground">
             Invista em ofertas de crédito e diversifique seu portfólio
@@ -106,7 +118,7 @@ export default function Marketplace() {
             {/* Header da lista com filtros mobile */}
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-heading-3 text-foreground mb-1">
+                <h2 className="text-h3 text-foreground mb-1">
                   Ofertas Disponíveis
                 </h2>
                 <p className="text-body-3 text-muted-foreground">
@@ -158,7 +170,7 @@ export default function Marketplace() {
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
                   <Filter className="w-8 h-8 text-muted-foreground" />
                 </div>
-                <h3 className="text-heading-3 text-foreground mb-2">
+                <h3 className="text-h3 text-foreground mb-2">
                   Nenhuma oferta encontrada
                 </h3>
                 <p className="text-body-3 text-muted-foreground mb-4">

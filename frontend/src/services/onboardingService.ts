@@ -1,9 +1,9 @@
 /**
  * Mock Onboarding Service
- * 
+ *
  * This service simulates backend API calls for the KYC onboarding flow.
  * When integrating with real APIs, replace the mock implementations with actual HTTP requests.
- * 
+ *
  * Expected real API endpoints:
  * - POST /api/onboarding/basic-data - Submit basic user information
  * - POST /api/onboarding/{id}/documents - Upload document files
@@ -13,8 +13,8 @@
  */
 
 // Simulate network latency
-const simulateDelay = (ms: number = 1000) => 
-  new Promise(resolve => setTimeout(resolve, ms));
+const simulateDelay = (ms: number = 1000) =>
+  new Promise((resolve) => setTimeout(resolve, ms));
 
 // Toggle this to simulate API errors for testing
 const SIMULATE_ERRORS = false;
@@ -27,7 +27,7 @@ export interface ApiResponse<T = unknown> {
 
 /**
  * Submit basic user data (Step 1)
- * 
+ *
  * Real API Contract:
  * POST /api/onboarding/basic-data
  * Body: { fullName: string, document: string, email: string, password: string }
@@ -68,7 +68,7 @@ export async function submitBasicData(payload: {
 
 /**
  * Upload document file (Step 2)
- * 
+ *
  * Real API Contract:
  * POST /api/onboarding/{onboardingId}/documents
  * Content-Type: multipart/form-data
@@ -85,7 +85,8 @@ export async function uploadDocument(
   if (SIMULATE_ERRORS && Math.random() > 0.8) {
     return {
       status: 'error',
-      message: 'Falha no upload do documento. Verifique o arquivo e tente novamente.',
+      message:
+        'Falha no upload do documento. Verifique o arquivo e tente novamente.',
     };
   }
 
@@ -120,7 +121,7 @@ export async function uploadDocument(
 
 /**
  * Submit selfie/biometric image (Step 3)
- * 
+ *
  * Real API Contract:
  * POST /api/onboarding/{onboardingId}/selfie
  * Content-Type: multipart/form-data or application/json with base64
@@ -154,7 +155,7 @@ export async function submitSelfie(
 
 /**
  * Finalize onboarding and submit for KYC verification (Step 4)
- * 
+ *
  * Real API Contract:
  * POST /api/onboarding/{onboardingId}/finalize
  * Body: { confirmData: boolean }
@@ -183,21 +184,23 @@ export async function finalizeOnboarding(
 
 /**
  * Check KYC verification status
- * 
+ *
  * Real API Contract:
  * GET /api/onboarding/{onboardingId}/kyc-status
- * Response: { 
- *   status: 'ok', 
- *   data: { 
+ * Response: {
+ *   status: 'ok',
+ *   data: {
  *     kycStatus: 'pending' | 'in_review' | 'approved' | 'denied',
  *     reason?: string,
  *     updatedAt: string
- *   } 
+ *   }
  * }
  */
 export async function checkKycStatus(
   onboardingId: string
-): Promise<ApiResponse<{ kycStatus: string; reason?: string; updatedAt: string }>> {
+): Promise<
+  ApiResponse<{ kycStatus: string; reason?: string; updatedAt: string }>
+> {
   await simulateDelay(500);
 
   return {

@@ -2,7 +2,13 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Card } from '@/components/ui/card';
 import { Filter, X } from 'lucide-react';
@@ -14,13 +20,17 @@ interface MarketplaceFiltersProps {
   isMobile?: boolean;
 }
 
-export function MarketplaceFilters({ onFilterChange, onClearFilters, isMobile = false }: MarketplaceFiltersProps) {
+export function MarketplaceFilters({
+  onFilterChange,
+  onClearFilters,
+  isMobile = false,
+}: MarketplaceFiltersProps) {
   const [minAmount, setMinAmount] = useState<number>(0);
   const [maxAmount, setMaxAmount] = useState<number>(25000);
   const [minRate, setMinRate] = useState<number>(1.0);
   const [maxRate, setMaxRate] = useState<number>(4.0);
-  const [term, setTerm] = useState<string>('');
-  const [riskProfile, setRiskProfile] = useState<string>('');
+  const [term, setTerm] = useState<string>('all');
+  const [riskProfile, setRiskProfile] = useState<string>('all');
 
   const handleApplyFilters = () => {
     const filters: FilterType = {
@@ -28,8 +38,8 @@ export function MarketplaceFilters({ onFilterChange, onClearFilters, isMobile = 
       maxAmount: maxAmount < 25000 ? maxAmount : undefined,
       minInterestRate: minRate > 1.0 ? minRate : undefined,
       maxInterestRate: maxRate < 4.0 ? maxRate : undefined,
-      term: term ? parseInt(term) : undefined,
-      riskProfile: riskProfile || undefined,
+      term: term !== 'all' ? parseInt(term) : undefined,
+      riskProfile: riskProfile !== 'all' ? riskProfile : undefined,
     };
     onFilterChange(filters);
   };
@@ -39,8 +49,8 @@ export function MarketplaceFilters({ onFilterChange, onClearFilters, isMobile = 
     setMaxAmount(25000);
     setMinRate(1.0);
     setMaxRate(4.0);
-    setTerm('');
-    setRiskProfile('');
+    setTerm('all');
+    setRiskProfile('all');
     onClearFilters();
   };
 
@@ -49,7 +59,7 @@ export function MarketplaceFilters({ onFilterChange, onClearFilters, isMobile = 
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <Filter className="w-5 h-5 text-primary" />
-          <h3 className="text-heading-3 text-card-foreground">Filtros</h3>
+          <h3 className="text-h3 text-card-foreground">Filtros</h3>
         </div>
         <Button
           variant="ghost"
@@ -163,7 +173,7 @@ export function MarketplaceFilters({ onFilterChange, onClearFilters, isMobile = 
               <SelectValue placeholder="Todos os prazos" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os prazos</SelectItem>
+              <SelectItem value="all">Todos os prazos</SelectItem>
               <SelectItem value="12">12 meses</SelectItem>
               <SelectItem value="18">18 meses</SelectItem>
               <SelectItem value="24">24 meses</SelectItem>
@@ -184,7 +194,7 @@ export function MarketplaceFilters({ onFilterChange, onClearFilters, isMobile = 
               <SelectValue placeholder="Todos os perfis" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os perfis</SelectItem>
+              <SelectItem value="all">Todos os perfis</SelectItem>
               <SelectItem value="Baixo Risco">Baixo Risco</SelectItem>
               <SelectItem value="Médio Risco">Médio Risco</SelectItem>
               <SelectItem value="Alto Risco">Alto Risco</SelectItem>
