@@ -1,34 +1,39 @@
-import animate from "tailwindcss-animate";
-import type { Config } from "tailwindcss";
+import type { Config } from 'tailwindcss';
+import tailwindcssAnimate from 'tailwindcss-animate';
 
 export default {
-  darkMode: ["class"],
-  content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
-  prefix: "",
+  darkMode: ['class'],
+  content: [
+    './pages/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
+    './app/**/*.{ts,tsx}',
+    './src/**/*.{ts,tsx}',
+  ],
+  prefix: '',
   theme: {
     container: {
       center: true,
-      padding: "2rem",
+      padding: '2rem',
       screens: {
-        "2xl": "1400px",
+        '2xl': '1400px',
       },
     },
     extend: {
       screens: {
-        'mobile': '390px',
+        mobile: '390px',
         'desktop-sm': '1280px',
         'desktop-md': '1512px',
         'desktop-lg': '1728px',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        display: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['"Plus Jakarta Sans"', 'sans-serif'],
       },
       fontSize: {
-        'h1': ['48px', { lineHeight: '56px', fontWeight: '700' }],
-        'h2': ['40px', { lineHeight: '48px', fontWeight: '600' }],
-        'h3': ['32px', { lineHeight: '40px', fontWeight: '600' }],
-        'h4': ['28px', { lineHeight: '36px', fontWeight: '500' }],
+        h1: ['48px', { lineHeight: '56px', fontWeight: '700' }],
+        h2: ['40px', { lineHeight: '48px', fontWeight: '700' }],
+        h3: ['32px', { lineHeight: '40px', fontWeight: '600' }],
+        h4: ['28px', { lineHeight: '36px', fontWeight: '600' }],
         'body-1': ['20px', { lineHeight: '28px' }],
         'body-2': ['18px', { lineHeight: '26px' }],
         'body-3': ['16px', { lineHeight: '24px' }],
@@ -121,10 +126,10 @@ export default {
         },
       },
       animation: {
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
+        'accordion-down': 'accordion-down 0.2s ease-out',
+        'accordion-up': 'accordion-up 0.2s ease-out',
       },
     },
   },
-   plugins: [animate],
+  plugins: [tailwindcssAnimate],
 } satisfies Config;

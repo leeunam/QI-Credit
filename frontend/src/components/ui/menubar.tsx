@@ -2,7 +2,11 @@ import * as React from "react";
 import * as MenubarPrimitive from "@radix-ui/react-menubar";
 import { Check, ChevronRight, Circle } from "lucide-react";
 
+<<<<<<< HEAD
+import { cn } from "@/lib/utils";
+=======
 import { cn } from "../../lib/utils";
+>>>>>>> frontend-TRUE
 
 const MenubarMenu = MenubarPrimitive.Menu;
 
