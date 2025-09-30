@@ -5,31 +5,82 @@
 ---
 
 ## 📌 Introdução
+
 A **QI Credit** é uma plataforma criada para integrar o hub de soluções financeiras da QI Tech.
 
 Hoje a QI Tech já possui APIs maduras para análise de crédito B2B/P2P entre empresas, mas falta uma **porta de entrada transparente** com execução on-chain e escrow automatizado para operações P2P — nosso foco nesta proposta é **implementar smart contracts obrigatórios para execução via escrow** e **registro hash-only em blockchain** para garantir transparência e rastreabilidade.
 
 ### 4 pilares da plataforma
-- **Smart Contracts:** automação do escrow e execução contratual (OBRIGATÓRIO).  
-- **Infraestrutura P2P:** marketplace que conecta investidores e tomadores.  
-- **Registro em blockchain (hash-only):** prova de existência e auditabilidade.  
+
+- **Smart Contracts:** automação do escrow e execução contratual (OBRIGATÓRIO).
+- **Infraestrutura P2P:** marketplace que conecta investidores e tomadores.
+- **Registro em blockchain (hash-only):** prova de existência e auditabilidade.
 - **Proof-of-funds (Hold/Capture):** garantia de que os fundos do investidor estão efetivamente reservados antes da ativação do contrato.
 
 ---
 
+## ⚡ Quick Start
+
+### 🏃‍♂️ Executar a Aplicação
+
+```bash
+# Na raiz do projeto
+npm start
+# ou
+npm run dev
+
+# Acesse: http://localhost:8080
+```
+
+### 📦 Instalação Completa
+
+```bash
+# Instalar todas as dependências
+npm run setup
+
+# Ou instalar apenas frontend
+npm run install:frontend
+```
+
+### 🛠️ Comandos Disponíveis
+
+```bash
+npm start           # Inicia servidor de desenvolvimento
+npm run build       # Build para produção
+npm run lint        # Executa linting
+npm run type-check  # Verificação TypeScript
+npm run clean       # Limpa caches
+npm run help        # Lista todos os comandos
+```
+
+### 📁 Estrutura do Projeto
+
+```
+QI-Credit/
+├── frontend/       # React + TypeScript + Vite
+├── backend/        # Node.js APIs
+├── blockchain/     # Smart Contracts
+├── database/       # DB migrations & models
+└── docs/          # Documentação
+```
+
+---
+
 ## 🚀 Fluxo da Plataforma (resumo)
-1. Investidor cadastra-se e seleciona perfil de risco.  
-2. Investidor cria `hold` (Proof-of-Funds) e deposita recursos no **smart contract escrow**.  
-3. Tomador faz onboarding, KYC e passa pela análise de crédito (API QI Tech).  
-4. Contrato digital é assinado pelas partes e um `eventHash` é registrado (hash-only) na blockchain.  
-5. Smart contract libera os fundos para o tomador após validação.  
-6. Tomador realiza pagamentos conforme cronograma; cada pagamento gera evento no contrato.  
-7. Penalidades aplicadas automaticamente em caso de atraso; cláusulas de resolução são acionadas em inadimplência extrema.  
+
+1. Investidor cadastra-se e seleciona perfil de risco.
+2. Investidor cria `hold` (Proof-of-Funds) e deposita recursos no **smart contract escrow**.
+3. Tomador faz onboarding, KYC e passa pela análise de crédito (API QI Tech).
+4. Contrato digital é assinado pelas partes e um `eventHash` é registrado (hash-only) na blockchain.
+5. Smart contract libera os fundos para o tomador após validação.
+6. Tomador realiza pagamentos conforme cronograma; cada pagamento gera evento no contrato.
+7. Penalidades aplicadas automaticamente em caso de atraso; cláusulas de resolução são acionadas em inadimplência extrema.
 8. Dashboard permite acompanhamento e auditoria por todas as partes.
 
 ---
 
 ## 📂 Estrutura de pastas (sugestão)
+
 ```
 HACKATHON-BH
 ├── certificado-nft
@@ -48,42 +99,50 @@ HACKATHON-BH
 ## 🛠️ Tech Stack
 
 ### Backend & Blockchain
-- **APIs QI Tech** (Onboarding, Credit Analysis, Wallet, Escrow).  
-- **Blockchains alvo:** Scroll, Arbitrum (EVM compatible).  
+
+- **APIs QI Tech** (Onboarding, Credit Analysis, Wallet, Escrow).
+- **Blockchains alvo:** Scroll, Arbitrum (EVM compatible).
 - **Linguagens:** Rust / Solidity (smart contracts), Node.js (backend orchestration).
 
 ### Frontend
+
 - **React.js** (UI/UX), Tailwind e React para estilo.
 
 ---
 
 ## 🗄️ Banco de Dados (Mini-DER)
+
 **Entities (mínimo):**
-- `users` (user_id, name, cpf/cnpj, email, status_kyc, created_at)  
-- `wallets` (wallet_id, user_id, currency, balance, reserved_balance, created_at)  
-- `marketplace_offers` (offer_id, investor_id, amount, rate, term, risk_profile, status)  
-- `loans / contracts` (contract_id, borrower_id, offer_id, principal, rate, term, status, signed_at)  
-- `escrow_events` (event_id, contract_id, event_type, amount, from_account, to_account, timestamp, tx_hash)  
+
+- `users` (user_id, name, cpf/cnpj, email, status_kyc, created_at)
+- `wallets` (wallet_id, user_id, currency, balance, reserved_balance, created_at)
+- `marketplace_offers` (offer_id, investor_id, amount, rate, term, risk_profile, status)
+- `loans / contracts` (contract_id, borrower_id, offer_id, principal, rate, term, status, signed_at)
+- `escrow_events` (event_id, contract_id, event_type, amount, from_account, to_account, timestamp, tx_hash)
 - `transactions` (tx_id, wallet_id_from, wallet_id_to, amount, tx_type, status, created_at)
 
-> **TODO:** Incluir DER detalhado (relacionamentos e cardinalidades) — *placeholder para próxima iteração*.
+> **TODO:** Incluir DER detalhado (relacionamentos e cardinalidades) — _placeholder para próxima iteração_.
 
 ---
 
 ## 🔒 Escrow + Smart Contracts
-**Conceito:**  
-- O smart contract atua como escrow: recebe depósitos dos investidores, mantém fundos bloqueados até que condições (KYC, score, assinatura) sejam satisfeitas e executa liberação, penalidades ou reembolso automaticamente.  
+
+**Conceito:**
+
+- O smart contract atua como escrow: recebe depósitos dos investidores, mantém fundos bloqueados até que condições (KYC, score, assinatura) sejam satisfeitas e executa liberação, penalidades ou reembolso automaticamente.
 - O registro na blockchain será **hash-only** (eventHash) para preservar privacidade e garantir auditabilidade.
 
 **Fluxo resumido (técnico):**
-1. `createLoan(borrower)` — plataforma cria registro de empréstimo no contrato on-chain (loanId).  
-2. `deposit(loanId)` — investidor deposita ETH/asset no smart contract; evento `Deposited` emitido com `eventHash`.  
-3. Off-chain: KYC + credit_analysis (QI API) → se aprovado, plataforma chama `release(loanId)` no smart contract.  
-4. `release(loanId)` → smart contract envia fundos ao tomador; evento `Released` emitido com `eventHash`.  
-5. Pagamentos periódicos executam eventos on-chain; inadimplência aciona `penalty` / cláusulas de resolução.  
 
-**Parâmetros (escrow events):**  
-- Entrada: `escrowId`, `contractId`, `eventType`, `amount`, `from`, `to`, `timestamp`.  
+1. `createLoan(borrower)` — plataforma cria registro de empréstimo no contrato on-chain (loanId).
+2. `deposit(loanId)` — investidor deposita ETH/asset no smart contract; evento `Deposited` emitido com `eventHash`.
+3. Off-chain: KYC + credit_analysis (QI API) → se aprovado, plataforma chama `release(loanId)` no smart contract.
+4. `release(loanId)` → smart contract envia fundos ao tomador; evento `Released` emitido com `eventHash`.
+5. Pagamentos periódicos executam eventos on-chain; inadimplência aciona `penalty` / cláusulas de resolução.
+
+**Parâmetros (escrow events):**
+
+- Entrada: `escrowId`, `contractId`, `eventType`, `amount`, `from`, `to`, `timestamp`.
 - Saída: `eventId`, `eventHash` (registrado em blockchain).
 
 **Taxas:** gas fees (execução on-chain). Estratégia de tax passing/absorption definida no modelo de negócio.
@@ -91,12 +150,13 @@ HACKATHON-BH
 ---
 
 ### Exemplo de Smart Contract (Solidity — minimal, didático)
+
 ```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
 contract SimpleEscrow {
-    address public platform; 
+    address public platform;
     enum State { AWAITING_VALIDATION, FUNDS_LOCKED, RELEASED, REFUNDED }
     struct Loan {
         address investor;
@@ -157,9 +217,10 @@ contract SimpleEscrow {
 ---
 
 ## 🔗 APIs
-- **Onboarding** (KYC)  
-- **Credit Analysis** (score/decisão)  
-- **Wallet** (saldo, pix, transferências)  
+
+- **Onboarding** (KYC)
+- **Credit Analysis** (score/decisão)
+- **Wallet** (saldo, pix, transferências)
 - **Escrow** (reconciliation, proof-of-funds, eventos)
 
 > **TODO:** Incluir exemplos de chamadas API (curl / JSON) após documentação final e mapeamento das rotas QI Tech.
@@ -167,34 +228,38 @@ contract SimpleEscrow {
 ---
 
 ## 🖼️ Diagramas
+
 - [Fluxo de Aplicação] (fluxoaplicacao.png)
 
 - Fluxo de API.
-[Fluxo de API] (fluxoapi.png)
+  [Fluxo de API] (fluxoapi.png)
 
 ---
 
 ## 📊 KPIs / Métricas de Sucesso
-- **Tempo médio de onboarding:** target < 5 min.  
-- **% de contratos liberados após validação:** target > 95%.  
-- **% de pagamentos on-time:** target > 90%.  
+
+- **Tempo médio de onboarding:** target < 5 min.
+- **% de contratos liberados após validação:** target > 95%.
+- **% de pagamentos on-time:** target > 90%.
 - **% de reconciliação automática de escrow:** target > 99%.
 
 ---
 
 ## 📅 Roadmap
-- **Collateral Management:** registro e avaliação de garantias.  
-- **Collections / Renegociação:** fluxo de cobrança, notificações e renegociação.  
-- **Rate Engine / Amortization:** cálculos SAC, PRICE, juros e multas.  
-- **Secondary Market:** permitir venda de posição por investidores.  
-- **IA externa no score:** pesquisa/PoC para uso de dados alternativos (ex.: redes sociais) — *roadmap apenas, não será desenvolvido no hackathon*.
+
+- **Collateral Management:** registro e avaliação de garantias.
+- **Collections / Renegociação:** fluxo de cobrança, notificações e renegociação.
+- **Rate Engine / Amortization:** cálculos SAC, PRICE, juros e multas.
+- **Secondary Market:** permitir venda de posição por investidores.
+- **IA externa no score:** pesquisa/PoC para uso de dados alternativos (ex.: redes sociais) — _roadmap apenas, não será desenvolvido no hackathon_.
 
 ---
 
 ## 💡 Diferenciais - “Wow factor”
-- **Chatbot trilíngue (EN/ES/PT-BR).**  
-- **Blockchain Proof-of-Existence** (registro hash-only).  
-- **Smart Contract no escrow:** automação e redução de intermediários (gas-fee only).  
+
+- **Chatbot trilíngue (EN/ES/PT-BR).**
+- **Blockchain Proof-of-Existence** (registro hash-only).
+- **Smart Contract no escrow:** automação e redução de intermediários (gas-fee only).
 - **Opções de saque para o tomador:** valor cheio (juros maiores) ou parcelado (juros menores).
 
 ---
@@ -202,31 +267,39 @@ contract SimpleEscrow {
 ## 🔧 Considerações Técnicas
 
 **Infraestrutura**
-- Banco de dados relacional (Postgres / MySQL).  
-- Integração BaaS (wallets, Pix, geração de cobranças).  
+
+- Banco de dados relacional (Postgres / MySQL).
+- Integração BaaS (wallets, Pix, geração de cobranças).
 - Monitoramento: logs, métricas, alertas (Prometheus / Grafana).
 
 **Segurança**
-- KYC/Onboarding integrado via QI APIs.  
-- AML / Sanctions Screening.  
-- Assinatura digital de contratos (CCB) e armazenamento seguro de documentos.  
+
+- KYC/Onboarding integrado via QI APIs.
+- AML / Sanctions Screening.
+- Assinatura digital de contratos (CCB) e armazenamento seguro de documentos.
 - Compliance LGPD (consent / right-to-be-forgotten pipeline).
 
 ---
 
 ## ▶️ How to Run / Demo Script
+
 > **TODO:** Incluir passo-a-passo detalhado para demo:
+
 - Ex.: 1) criar investidor → 2) criar loanId → 3) investidor `deposit(loanId)` (hold) → 4) tomador onboarding + credit_analysis → 5) plataforma chama `release(loanId)` → 6) registrar pagamentos.
 
 ---
 
 ## 🙏 Agradecimentos
+
 Um agradecimento especial à equipe da **Poli Júnior** e à **QI Tech** pela oportunidade e abertura das APIs.
 
 ---
 
 ## ⚠️ Disclaimer
+
 A QI Tech já utiliza blockchain e Web3 em APIs de câmbio e stablecoin. Nossa proposta é **expandir** essa infraestrutura para o mercado de crédito P2P, com foco em escrow automatizado, transparência e rastreabilidade (hash-only).  
 Este README é uma versão MVP/POC — itens de produção (auditoria de smart contracts, monitoramento, GL, collections) estão no roadmap.
+
+```
 
 ```
