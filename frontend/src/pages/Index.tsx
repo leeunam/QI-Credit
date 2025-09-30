@@ -1,5 +1,6 @@
-import { Button } from '@/components/ui/button';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import {
   ShieldCheck,
   FileText,
@@ -10,9 +11,40 @@ import {
   DollarSign,
   Wallet,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Header } from '../components/layout/Header';
+import { HeroSection } from '../components/sections/HeroSection';
+import { FeaturesSection } from '../components/sections/FeaturesSection';
+import { AuthModal } from '../components/modals/AuthModal';
+import Dashboard from './Dashboard';
 
 const Index = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // If user is logged in, show dashboard
+  if (user) {
+    return <Dashboard />;
+  }
+
+  // Handlers for AuthModal
+  const handleLoginClick = () => {
+    setAuthMode('login');
+    setAuthModalOpen(true);
+  };
+
+  const handleSignupClick = () => {
+    setAuthMode('signup');
+    setAuthModalOpen(true);
+  };
+
+  const handleGetStarted = () => {
+    setAuthMode('signup');
+    setAuthModalOpen(true);
+  };
 
   // Features do sistema KYC
   const kycFeatures = [
@@ -59,17 +91,49 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
+      {/* Header e Mobile Menu */}
+      <Header
+        onLoginClick={handleLoginClick}
+        onSignupClick={handleSignupClick}
+        onMobileMenuClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+      />
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-card border-b px-4 py-4 space-y-4">
+          <a href="#features" className="block text-body-3 text-muted-foreground hover:text-foreground">
+            Recursos
+          </a>
+          <a href="#about" className="block text-body-3 text-muted-foreground hover:text-foreground">
+            Sobre
+          </a>
+          <a href="#contact" className="block text-body-3 text-muted-foreground hover:text-foreground">
+            Contato
+          </a>
+          <div className="pt-4 border-t space-y-2">
+            <button
+              onClick={handleLoginClick}
+              className="block w-full text-left text-body-3 text-secondary hover:text-secondary/80"
+            >
+              Entrar
+            </button>
+            <button
+              onClick={handleSignupClick}
+              className="block w-full text-left text-body-3 text-primary hover:text-primary/80 font-semibold"
+            >
+              Cadastrar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Hero Section com CTA */}
       <div className="container mx-auto px-4 py-16 desktop-sm:py-24">
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
             <TrendingUp className="w-10 h-10 text-primary" />
           </div>
-
           <h1 className="text-display text-foreground mb-6">
             QI Credit - Plataforma Completa
           </h1>
-
           <p className="text-body-1 text-muted-foreground mb-8 max-w-3xl mx-auto">
             Cadastro KYC seguro e investimentos P2P inteligentes. Complete seu
             cadastro e explore oportunidades de investimento.
@@ -150,36 +214,37 @@ const Index = () => {
           <h2 className="text-heading-3 mb-4 text-center">Plataforma Segura</h2>
           <ul className="space-y-3 text-body-3">
             <li className="flex items-start gap-2">
-              <CheckCircle
-                size={20}
-                className="text-success mt-0.5 flex-shrink-0"
-              />
+              <CheckCircle size={20} className="text-success mt-0.5 flex-shrink-0" />
               <span>Cadastro 100% online e seguro</span>
             </li>
             <li className="flex items-start gap-2">
-              <CheckCircle
-                size={20}
-                className="text-success mt-0.5 flex-shrink-0"
-              />
+              <CheckCircle size={20} className="text-success mt-0.5 flex-shrink-0" />
               <span>Verificação de identidade em tempo real</span>
             </li>
             <li className="flex items-start gap-2">
-              <CheckCircle
-                size={20}
-                className="text-success mt-0.5 flex-shrink-0"
-              />
+              <CheckCircle size={20} className="text-success mt-0.5 flex-shrink-0" />
               <span>Investimentos com análise de risco completa</span>
             </li>
             <li className="flex items-start gap-2">
-              <CheckCircle
-                size={20}
-                className="text-success mt-0.5 flex-shrink-0"
-              />
+              <CheckCircle size={20} className="text-success mt-0.5 flex-shrink-0" />
               <span>Dados protegidos com criptografia</span>
             </li>
           </ul>
         </div>
       </div>
+
+      {/* HeroSection e FeaturesSection adicionais */}
+      <main>
+        <HeroSection onGetStarted={handleGetStarted} />
+        <FeaturesSection />
+      </main>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        initialMode={authMode}
+      />
     </div>
   );
 };
