@@ -1,7 +1,8 @@
 import React from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { CustomButton } from '../../components/ui/button-variants';
-import { Menu, User, LogOut } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { CustomButton } from '@/components/ui/button-variants';
+import { Menu, User, LogOut, Wallet, CreditCard} from 'lucide-react';
 
 interface HeaderProps {
   onLoginClick: () => void;
@@ -29,14 +30,26 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
+            <Link to="/" className="text-body-3 text-muted-foreground hover:text-foreground transition-colors">
+              Início
+            </Link>
+            {user && (
+              <>
+                <Link to="/wallet" className="text-body-3 text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                  <Wallet className="h-4 w-4" />
+                  Carteira
+                </Link>
+                <Link to="/credit-request" className="text-body-3 text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  Solicitar Crédito
+                </Link>
+              </>
+            )}
             <a href="#features" className="text-body-3 text-muted-foreground hover:text-foreground transition-colors">
               Recursos
             </a>
             <a href="#about" className="text-body-3 text-muted-foreground hover:text-foreground transition-colors">
               Sobre
-            </a>
-            <a href="#contact" className="text-body-3 text-muted-foreground hover:text-foreground transition-colors">
-              Contato
             </a>
           </nav>
 
