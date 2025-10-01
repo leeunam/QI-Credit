@@ -4,20 +4,18 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Unified Design System - KYC Onboarding + Financial/Marketplace - All colors MUST be HSL */
+/* Unified Design System + Colors + Typography */
 
 @layer base {
   :root {
-    /* Base colors - Enhanced with credit-spark palette */
+    /* Base colors - HSL */
     --background: 220 20% 97%;
     --foreground: 220 15% 15%;
 
-    /* Brand colors - Hybrid system optimized */
     --primary: 215 85% 45%;
     --primary-foreground: 0 0% 100%;
     --primary-hover: 226 64% 42%;
 
-    /* Secondary - Balanced approach */
     --secondary: 220 15% 92%;
     --secondary-foreground: 220 15% 15%;
     --secondary-hover: 186 100% 32%;
@@ -25,7 +23,6 @@
     --tertiary: 210 7% 46%;
     --tertiary-foreground: 0 0% 100%;
 
-    /* State colors - Enhanced with both systems */
     --success: 152 65% 45%;
     --success-foreground: 0 0% 100%;
 
@@ -38,14 +35,12 @@
     --warning: 38 95% 55%;
     --warning-foreground: 220 15% 15%;
 
-    /* Credit-spark enhanced palette */
     --accent: 152 65% 45%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    /* UI elements - Optimized for both systems */
     --card: 0 0% 100%;
     --card-foreground: 220 15% 15%;
 
@@ -59,7 +54,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 15% 15%;
 
-    /* Financial/Marketplace specific tokens */
+    /* Sidebar */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -69,21 +64,19 @@
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
 
-    /* Typography tokens */
-    --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
-      sans-serif;
-    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
-      sans-serif;
+    /* Typography */
+    --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
-    /* Spacing tokens */
+    /* Spacing & Radius */
     --spacing-1: 0.5rem;
     --spacing-2: 1rem;
     --spacing-3: 1.5rem;
     --spacing-4: 2rem;
     --spacing-6: 3rem;
-
-    /* Design tokens */
     --radius: 0.5rem;
+
+    /* Transitions */
     --transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
@@ -118,7 +111,6 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    /* Dark mode sidebar variables */
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -137,15 +129,12 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
+  h1, h2, h3, h4, h5, h6 {
     @apply font-display;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   }
 }
 
@@ -154,43 +143,31 @@
     transition: var(--transition);
   }
 
-  /* Typography Scale from Marketplace System */
-  .text-display {
-    font-size: 48px;
-    line-height: 1.2;
-    font-weight: 700;
+  /* Typography Scale */
+  .text-display { font-size: 48px; line-height: 1.2; font-weight: 700; }
+  .text-heading-1 { font-size: 40px; line-height: 1.3; font-weight: 700; }
+  .text-heading-2 { font-size: 36px; line-height: 1.3; font-weight: 600; }
+  .text-heading-3 { font-size: 32px; line-height: 1.3; font-weight: 600; }
+  .text-body-1 { font-size: 20px; line-height: 1.6; }
+  .text-body-2 { font-size: 18px; line-height: 1.6; }
+  .text-body-3 { font-size: 16px; line-height: 1.5; }
+}
+
+@layer components {
+  /* Typography utilities */
+  .text-h1 { @apply text-5xl leading-tight font-bold; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .text-h2 { @apply text-4xl leading-tight font-semibold; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .text-h3 { @apply text-3xl leading-tight font-semibold; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .text-h4 { @apply text-2xl leading-9 font-medium; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .text-body-4 { @apply text-sm leading-5; }
+
+  /* Custom button variants */
+  .btn-gradient {
+    background: var(--gradient-primary);
+    @apply text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300;
   }
 
-  .text-heading-1 {
-    font-size: 40px;
-    line-height: 1.3;
-    font-weight: 700;
-  }
-
-  .text-heading-2 {
-    font-size: 36px;
-    line-height: 1.3;
-    font-weight: 600;
-  }
-
-  .text-heading-3 {
-    font-size: 32px;
-    line-height: 1.3;
-    font-weight: 600;
-  }
-
-  .text-body-1 {
-    font-size: 20px;
-    line-height: 1.6;
-  }
-
-  .text-body-2 {
-    font-size: 18px;
-    line-height: 1.6;
-  }
-
-  .text-body-3 {
-    font-size: 16px;
-    line-height: 1.5;
+  .btn-outline-secondary {
+    @apply border border-secondary text-secondary bg-transparent hover:bg-secondary hover:text-white transition-all duration-300;
   }
 }
