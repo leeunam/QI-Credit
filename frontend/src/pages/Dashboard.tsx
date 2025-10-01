@@ -18,6 +18,7 @@ import { useDashboard, UserRole } from '@/hooks/useDashboard';
 import { useInvest } from '@/hooks/useInvest';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
   const [userRole] = useState<UserRole>('investor'); // Change to 'borrower' to test borrower view
@@ -30,6 +31,8 @@ export default function Dashboard() {
   const [investModalOpen, setInvestModalOpen] = useState(false);
   const [depositModalOpen, setDepositModalOpen] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState<any>(null);
+  const navigate = useNavigate();
+  
 
   const handleInvest = (offerId: string, amount: number) => {
     const offer = data?.marketplaceOffers.find((o) => o.id === offerId);
@@ -104,10 +107,10 @@ export default function Dashboard() {
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Depositar
                       </Button>
-                      <Button variant="outline" className="w-full">
-                        <Search className="mr-2 h-4 w-4" />
+                      <Button variant="outline" className="w-full" onClick={() => navigate('/marketplace')}>
+                        <Search className="mr-2 h-4 w-4"/>
                         Explorar Ofertas
-                      </Button>
+                      </Button > 
                     </>
                   ) : (
                     <>
@@ -154,9 +157,7 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <WalletCard
                   balance={data?.balance || 0}
-                  onViewWallet={() =>
-                    toast({ title: 'Carteira', description: 'Em desenvolvimento' })
-                  }
+                  onViewWallet={() => navigate('/wallet')}
                 />
 
                 {userRole === 'investor' && data?.investments && (
@@ -181,7 +182,7 @@ export default function Dashboard() {
                           {data.investments.expectedIRR}%
                         </span>
                       </div>
-                      <Button variant="outline" size="sm" className="w-full mt-2">
+                      <Button variant="outline" size="sm" className="w-full mt-2" onClick={() => navigate('/investor-dashboard')}>
                         Ver detalhes
                       </Button>
                     </CardContent>
@@ -205,7 +206,7 @@ export default function Dashboard() {
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="text-body-2">Marketplace Snapshot</CardTitle>
-                    <Button variant="link" size="sm">
+                    <Button variant="link" size="sm" onClick={() => navigate('/marketplace')}>
                       Ver todas as ofertas
                     </Button>
                   </CardHeader>
@@ -255,8 +256,8 @@ export default function Dashboard() {
               {data?.escrow && (
                 <EscrowStatusCard
                   {...data.escrow}
-                  onViewDetails={() =>
-                    toast({ title: 'Escrow', description: 'Em desenvolvimento' })
+                  onViewDetails={() => 
+                    navigate('/smart-contract/:id')
                   }
                 />
               )}
