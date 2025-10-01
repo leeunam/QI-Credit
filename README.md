@@ -1,155 +1,383 @@
-# QI Credit - Plataforma P2P com Smart Contracts & Blockchain
+# 🌐 QI Credit – Plataforma P2P com Escrow On-Chain
 
-![logo](./logo.png)
+<img src="/docs/logo.png" alt="QI Credit Logo" width="200" height="auto">
+
+> Infraestrutura P2P de crédito com escrow automatizado via smart contract e registro hash-only em blockchain para transparência, prova de existência e mitigação de risco.
+
+## Navegação Rápida
+
+- [Visão Geral](#visão-geral)
+- [Fluxo End-to-End](#fluxo-end-to-end)
+- [Arquitetura Resumida](#arquitetura-resumida)
+- [Modelo de Dados](#modelo-de-dados-resumo)
+- [Segurança (Resumo)](#segurança-resumo)
+- [KPIs](#kpis-mvp)
+- [Roadmap](#roadmap-resumido)
+- [Testes](#testes)
+- [Smart Contract (Didático)](#anexo-smart-contract-didático-atual-minimal)
+
+### Documentação Detalhada
+
+| Tópico              | Arquivo                                                                  | Descrição                                                                             |
+| ------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| API Completa        | [`docs/api-specification.md`](docs/api-specification.md)                 | Endpoints por domínio (Onboarding, Crédito, Wallet, Escrow, Antifraude, Autenticação) |
+| Arquitetura         | [`docs/architecture.md`](docs/architecture.md)                           | Camadas, componentes, decisões (ADRs), escalabilidade, riscos                         |
+| Banco & DER         | [`docs/db.md`](docs/db.md)                                               | Modelo lógico, tabelas, índices, integridade, exemplos SQL                            |
+| Fluxos & Estados    | [`docs/diagrams/flows.md`](docs/diagrams/flows.md)                       | Sequências, estados, reconciliação, journey                                           |
+| Exemplos Backend    | [`docs/examples/backend-examples.md`](docs/examples/backend-examples.md) | Orquestração de empréstimo, escrow, curl scripts                                      |
+| Segurança Front-end | [`docs/security-frontend.md`](docs/security-frontend.md)                 | Cookies seguros, XSS/CSRF, EIP-712, isolamentos                                       |
+| Roadmap Estratégico | [`docs/roadmap.md`](docs/roadmap.md)                                     | Fases, backlog, riscos, métricas macro                                                |
+
+> Em desenvolvimento futuro: KPIs detalhados (`docs/kpis.md`), guia de contribuição (`CONTRIBUTING.md`), fluxos API encadeados (`docs/examples/api-flows.md`).
+
+## Visão Geral
+
+O ecossistema de crédito P2P carece de transparência operacional: fundos são bloqueados de forma opaca, validações KYC/score são black-box e a execução contratual é lenta.
+
+Diante disso, propomos a **QI Credit**, um fluxo auditável com o seguinte fluxo:
+
+Depósito do investidor → validação regulatória/KYC/score → assinatura → liberação → pagamentos e eventos → auditoria em tempo real.
+
+### Problema
+
+Fragmentação entre: onboarding, análise, reserva de fundos e execução contratual. Falta uma “camada de confiança” neutra e verificável.
+
+### Solução
+
+1. Smart contract de escrow (hash-only events) + prova de fundos.
+2. Backend integrando APIs QI (onboarding, score, wallet).
+3. Marketplace P2P onde investidores criam ofertas e tomadores consomem.
+4. Dashboard unificado com rastreabilidade e métricas operacionais.
+
+### Diferenciais
+
+- Hash-only: sem exposição de dados sensíveis on-chain.
+- Prova de fundos antes da assinatura (reduce default risk).
+- Eventos on-chain servindo como trilha imutável de execução.
+- Extensível para secondary market / colateral no roadmap.
+- Modular (cada domínio isolado em `apis/*`).
 
 ---
 
-## 📌 Introdução
+## Fluxo End-to-End
 
-A **QI Credit** é uma plataforma criada para integrar o hub de soluções financeiras da QI Tech.
+1. Investidor cria conta (KYC básico) e registra uma oferta (valor, taxa, prazo);
+2. Tomador realiza onboarding + análise de crédito (score > threshold) - _significa que o crédito só é aprovado se a pontuação (score de crédito) for maior que um limite mínimo pré-definido (threshold)_
+3. Plataforma cria `loanId` on-chain (estado inicial);
+4. Investidor realiza `deposit(loanId)` → fundos bloqueados;
+5. Assinatura digital off-chain (hash armazenado on-chain);
+6. Backend valida: KYC + score + assinatura → chama `release(loanId)`;
+7. Tomador recebe fundos e cronograma de pagamentos inicia;
+8. Pagamentos/atrasos geram eventos e alimentam dashboard/KPIs.
 
-Hoje a QI Tech já possui APIs maduras para análise de crédito B2B/P2P entre empresas, mas falta uma **porta de entrada transparente** com execução on-chain e escrow automatizado para operações P2P — nosso foco nesta proposta é **implementar smart contracts obrigatórios para execução via escrow** e **registro hash-only em blockchain** para garantir transparência e rastreabilidade.
+### Sequence
 
-### 4 pilares da plataforma
+```mermaid
+sequenceDiagram
+    autonumber
+    participant I as Investidor
+    participant FE as Frontend
+    participant BE as Backend API
+    participant SC as SmartContract
+    participant KYC as QI KYC API
+    participant SCORE as QI Credit API
 
-- **Smart Contracts:** automação do escrow e execução contratual (OBRIGATÓRIO).
-- **Infraestrutura P2P:** marketplace que conecta investidores e tomadores.
-- **Registro em blockchain (hash-only):** prova de existência e auditabilidade.
-- **Proof-of-funds (Hold/Capture):** garantia de que os fundos do investidor estão efetivamente reservados antes da ativação do contrato.
+    I->>FE: Login / Criar Oferta
+    FE->>BE: POST /offers
+    BE-->>FE: offerId
+    I->>FE: Depositar (valor)
+    FE->>BE: POST /loans/:id/deposit
+    BE->>SC: deposit(loanId) value
+    SC-->>BE: Event Deposited(hash)
+    BE->>KYC: GET /kyc/status(borrower)
+    BE->>SCORE: POST /credit/analysis
+    KYC-->>BE: status=approved
+    SCORE-->>BE: score=720 decision=approve
+    BE->>SC: release(loanId)
+    SC-->>BE: Event Released(hash)
+    BE-->>FE: status=FUNDED
+```
 
 ---
 
-## ⚡ Quick Start
+## Arquitetura Resumida
 
-### 🏃‍♂️ Executar a Aplicação
+```mermaid
+flowchart LR
+    subgraph Frontend [React SPA]
+        UI[Dashboard / Onboarding]
+        State[Contexts + Hooks]
+    end
+    subgraph Backend[Node.js BFF]
+        API[REST APIs]
+        SVC[Domain Services]
+        ADP[Adapters QI]
+    end
+    subgraph Blockchain[EVM Chain]
+        ESC[EscrowSmartContract]
+    end
+    subgraph DB[PostgreSQL]
+        T1[(users)]
+        T2[(wallets)]
+        T3[(offers)]
+        T4[(loan_contracts)]
+        T5[(escrow_events)]
+        T6[(transactions)]
+    end
+    UI-->API
+    API-->SVC-->DB
+    SVC-->ESC
+    ESC-->SVC
+    SVC-->ADP-->QI[(QI APIs)]
+```
+
+---
+
+## Modelo de Dados (Resumo)
+
+```mermaid
+erDiagram
+    USERS ||--o{ WALLETS : has
+    USERS ||--o{ LOAN_CONTRACTS : borrows
+    USERS ||--o{ MARKETPLACE_OFFERS : creates
+    MARKETPLACE_OFFERS ||--o{ LOAN_CONTRACTS : fulfills
+    LOAN_CONTRACTS ||--o{ ESCROW_EVENTS : tracks
+    WALLETS ||--o{ TRANSACTIONS : movements
+    LOAN_CONTRACTS ||--o{ HOLDS : reserves
+
+    USERS {
+        uuid user_id PK
+        string name
+        string document
+        string email
+        string status_kyc
+        timestamp created_at
+    }
+    WALLETS {
+        uuid wallet_id PK
+        uuid user_id FK
+        string currency
+        numeric balance
+        numeric reserved_balance
+        timestamp created_at
+    }
+    MARKETPLACE_OFFERS {
+        uuid offer_id PK
+        uuid investor_id FK
+        numeric amount
+        numeric rate
+        int term_days
+        string risk_profile
+        string status
+    }
+    LOAN_CONTRACTS {
+        uuid loan_id PK
+        uuid borrower_id FK
+        uuid offer_id FK
+        numeric principal
+        numeric rate
+        int term_days
+        string status
+        timestamp signed_at
+    }
+    HOLDS {
+        uuid hold_id PK
+        uuid loan_id FK
+        numeric amount
+        string status
+        timestamp created_at
+    }
+    ESCROW_EVENTS {
+        uuid event_id PK
+        uuid loan_id FK
+        string event_type
+        numeric amount
+        string tx_hash
+        timestamp created_at
+    }
+    TRANSACTIONS {
+        uuid tx_id PK
+        uuid wallet_id_from FK
+        uuid wallet_id_to FK
+        numeric amount
+        string tx_type
+        string status
+        timestamp created_at
+    }
+```
+
+---
+
+## Quick Start
+
+### Requisitos
 
 ```bash
-# Na raiz do projeto
-npm start
-# ou
-npm run dev
-
-# Acesse: http://localhost:8080
+node >= 18
+npm  >= 9
+docker (opcional para Postgres)
 ```
 
-### 📦 Instalação Completa
+### Clonar e Instalar
 
 ```bash
-# Instalar todas as dependências
-npm run setup
-
-# Ou instalar apenas frontend
-npm run install:frontend
+git clone <repo>
+cd QI-Credit
+cp .env.example .env
+npm run setup   # instala tudo (root + frontend + backend + blockchain)
 ```
 
-### 🛠️ Comandos Disponíveis
+### Rodar Ambiente
 
 ```bash
-npm start           # Inicia servidor de desenvolvimento
-npm run build       # Build para produção
-npm run lint        # Executa linting
-npm run type-check  # Verificação TypeScript
-npm run clean       # Limpa caches
-npm run help        # Lista todos os comandos
+npm run dev     # orquestra frontend + backend (ajustar scripts)
+# backend isolado
+cd backend && npm start
+# frontend isolado
+cd frontend && npm run dev
 ```
 
-### 📁 Estrutura do Projeto
+### Scripts Principais
 
-```
-QI-Credit/
-├── frontend/       # React + TypeScript + Vite
-├── backend/        # Node.js APIs
-├── blockchain/     # Smart Contracts
-├── database/       # DB migrations & models
-└── docs/          # Documentação
-```
-
----
-
-## 🚀 Fluxo da Plataforma (resumo)
-
-1. Investidor cadastra-se e seleciona perfil de risco.
-2. Investidor cria `hold` (Proof-of-Funds) e deposita recursos no **smart contract escrow**.
-3. Tomador faz onboarding, KYC e passa pela análise de crédito (API QI Tech).
-4. Contrato digital é assinado pelas partes e um `eventHash` é registrado (hash-only) na blockchain.
-5. Smart contract libera os fundos para o tomador após validação.
-6. Tomador realiza pagamentos conforme cronograma; cada pagamento gera evento no contrato.
-7. Penalidades aplicadas automaticamente em caso de atraso; cláusulas de resolução são acionadas em inadimplência extrema.
-8. Dashboard permite acompanhamento e auditoria por todas as partes.
-
----
-
-## 📂 Estrutura de pastas (sugestão)
-
-```
-HACKATHON-BH
-├── certificado-nft
-│   └── ...
-├── client
-│   └── ...
-├── scroll
-│   └── ...
-├── token-smd
-│   └── ...
-├── README.md
+```bash
+npm start        # start principal
+npm run dev      # modo desenvolvimento
+npm run build    # build frontend/backend
+npm run lint     # lint
+npm run type-check
+npm run clean
 ```
 
 ---
 
-## 🛠️ Tech Stack
+## Exemplo de Código – Backend (Handler Escrow Simplificado)
 
-### Backend & Blockchain
+```javascript
+// backend/controllers/escrowController.js (exemplo simplificado)
+exports.deposit = async (req, res, next) => {
+  const { loanId } = req.params;
+  const { amount, investorWallet } = req.body;
+  try {
+    // 1. valida loan, status
+    // 2. chama service que interage com smart contract via ethers.js
+    const event = await req.services.escrow.deposit({
+      loanId,
+      amount,
+      investorWallet,
+    });
+    res.status(201).json({ success: true, event });
+  } catch (e) {
+    next(e);
+  }
+};
+```
 
-- **APIs QI Tech** (Onboarding, Credit Analysis, Wallet, Escrow).
-- **Blockchains alvo:** Scroll, Arbitrum (EVM compatible).
-- **Linguagens:** Rust / Solidity (smart contracts), Node.js (backend orchestration).
-
-### Frontend
-
-- **React.js** (UI/UX), Tailwind e React para estilo.
-
----
-
-## 🗄️ Banco de Dados (Mini-DER)
-
-**Entities (mínimo):**
-
-- `users` (user_id, name, cpf/cnpj, email, status_kyc, created_at)
-- `wallets` (wallet_id, user_id, currency, balance, reserved_balance, created_at)
-- `marketplace_offers` (offer_id, investor_id, amount, rate, term, risk_profile, status)
-- `loans / contracts` (contract_id, borrower_id, offer_id, principal, rate, term, status, signed_at)
-- `escrow_events` (event_id, contract_id, event_type, amount, from_account, to_account, timestamp, tx_hash)
-- `transactions` (tx_id, wallet_id_from, wallet_id_to, amount, tx_type, status, created_at)
-
-> **TODO:** Incluir DER detalhado (relacionamentos e cardinalidades) — _placeholder para próxima iteração_.
-
----
-
-## 🔒 Escrow + Smart Contracts
-
-**Conceito:**
-
-- O smart contract atua como escrow: recebe depósitos dos investidores, mantém fundos bloqueados até que condições (KYC, score, assinatura) sejam satisfeitas e executa liberação, penalidades ou reembolso automaticamente.
-- O registro na blockchain será **hash-only** (eventHash) para preservar privacidade e garantir auditabilidade.
-
-**Fluxo resumido (técnico):**
-
-1. `createLoan(borrower)` — plataforma cria registro de empréstimo no contrato on-chain (loanId).
-2. `deposit(loanId)` — investidor deposita ETH/asset no smart contract; evento `Deposited` emitido com `eventHash`.
-3. Off-chain: KYC + credit_analysis (QI API) → se aprovado, plataforma chama `release(loanId)` no smart contract.
-4. `release(loanId)` → smart contract envia fundos ao tomador; evento `Released` emitido com `eventHash`.
-5. Pagamentos periódicos executam eventos on-chain; inadimplência aciona `penalty` / cláusulas de resolução.
-
-**Parâmetros (escrow events):**
-
-- Entrada: `escrowId`, `contractId`, `eventType`, `amount`, `from`, `to`, `timestamp`.
-- Saída: `eventId`, `eventHash` (registrado em blockchain).
-
-**Taxas:** gas fees (execução on-chain). Estratégia de tax passing/absorption definida no modelo de negócio.
+```javascript
+// backend/services/escrowService.js (trecho conceitual)
+const { ethers } = require('ethers');
+module.exports = ({ contractAddress, abi, provider, signer, db }) => ({
+  async deposit({ loanId, amount, investorWallet }) {
+    const contract = new ethers.Contract(contractAddress, abi, signer);
+    const tx = await contract.deposit(loanId, {
+      value: ethers.parseEther(amount.toString()),
+    });
+    const receipt = await tx.wait();
+    const ev = receipt.logs.find(
+      (l) => l.fragment && l.fragment.name === 'Deposited'
+    );
+    const eventHash = ev ? ev.args.eventHash : null;
+    await db('escrow_events').insert({
+      loan_id: loanId,
+      event_type: 'DEPOSITED',
+      amount,
+      tx_hash: eventHash,
+    });
+    return { loanId, amount, txHash: eventHash };
+  },
+});
+```
 
 ---
 
-### Exemplo de Smart Contract (Solidity — minimal, didático)
+## Segurança (Resumo)
+
+- Tokens somente em `httpOnly` cookies (evitar XSS token theft).
+- Sanitização e validação (camada `middlewares/validation.js`).
+- Rate limiting para endpoints sensíveis (`/auth`, `/deposit`).
+- Hash-only on-chain evita exposição de PII.
+- Logs estruturados + correlação de request-id.
+- Planejado: assinatura digital dos contratos (hash canonical).
+
+---
+
+## KPIs (MVP)
+
+| Métrica               | Descrição                         | Target Inicial |
+| --------------------- | --------------------------------- | -------------- |
+| Onboarding Time       | Tempo médio KYC aprovado          | < 5 min        |
+| Approval Rate         | % loans liberados após depósito   | > 95%          |
+| On-Time Payments      | % parcelas pagas no prazo         | > 90%          |
+| Escrow Reconciliation | Eventos consistentes on/off chain | > 99%          |
+| Funding Velocity      | Tempo depósito → liberação        | < 2 min        |
+
+---
+
+## Roadmap Resumido
+
+```mermaid
+gantt
+    dateFormat  YYYY-MM-DD
+    title Roadmap MVP -> Expansão
+
+    section MVP
+    Escrow Básico            :done,    m1, 2025-09-01, 2025-09-10
+    Onboarding + Score       :active,  m2, 2025-09-05, 2025-09-20
+    Dashboard Inicial        :         m3, 2025-09-15, 2025-09-25
+
+    section Pós-MVP
+    Repayments Automatizados :         m4, 2025-10-01, 2025-10-10
+    Penalidades / Refund     :         m5, 2025-10-05, 2025-10-15
+    Secondary Market         :         m6, 2025-10-15, 2025-10-30
+
+```
+
+---
+
+## Testes
+
+Estratégia:
+
+- Unit: services isolados (mock providers).
+- Integration: rotas + DB (containers).
+- e2e: fluxo completo (Playwright).
+- Smart contracts: Hardhat tests para estados e eventos.
+
+---
+
+## Licença
+
+MIT – ver [`LICENSE`](LICENSE).
+
+---
+
+## ⚠️ Disclaimer
+
+MVP focado em demonstrar viabilidade de escrow on-chain integrado ao ecossistema QI. Não substitui processos regulatórios completos, auditoria de contratos ou certificações de produção.
+
+---
+
+## Próximos Complementos
+
+- Documentação completa de API's em `docs/api-specification.md`
+- Diagramas adicionais [aqui](docs/diagrams).
+- Migrations SQL refinadas com índices e constraints.
+- Smart contract estendido com penalties & partial releases.
+
+> Para detalhes aprofundados veja: `docs/architecture.md`, `docs/db.md`, `docs/roadmap.md`.
+
+---
+
+### Anexo: Smart Contract Didático Atual (Minimal)
 
 ```solidity
 // SPDX-License-Identifier: MIT
@@ -171,135 +399,44 @@ contract SimpleEscrow {
     event Released(uint256 loanId, address indexed borrower, uint256 amount, bytes32 eventHash);
     event Refunded(uint256 loanId, address indexed investor, uint256 amount, bytes32 eventHash);
 
-    constructor() {
-        platform = msg.sender;
-    }
+    constructor() { platform = msg.sender; }
 
     function createLoan(address borrower) external returns (uint256) {
         require(msg.sender == platform, "only platform");
         loans[nextLoanId] = Loan(address(0), borrower, 0, State.AWAITING_VALIDATION);
-        nextLoanId++;
-        return nextLoanId - 1;
+        return nextLoanId++;
     }
 
     function deposit(uint256 loanId) external payable {
         require(msg.value > 0, "zero");
         Loan storage l = loans[loanId];
-        require(l.amount == 0 && l.state == State.AWAITING_VALIDATION, "invalid state");
-        l.investor = msg.sender;
-        l.amount = msg.value;
-        l.state = State.FUNDS_LOCKED;
+        require(l.amount == 0 && l.state == State.AWAITING_VALIDATION, "invalid");
+        l.investor = msg.sender; l.amount = msg.value; l.state = State.FUNDS_LOCKED;
         emit Deposited(loanId, msg.sender, msg.value, keccak256(abi.encodePacked(loanId, msg.sender, msg.value, block.timestamp)));
     }
 
     function release(uint256 loanId) external {
         require(msg.sender == platform, "only platform");
         Loan storage l = loans[loanId];
-        require(l.state == State.FUNDS_LOCKED, "not locked");
-        l.state = State.RELEASED;
-        payable(l.borrower).transfer(l.amount);
+        require(l.state == State.FUNDS_LOCKED, "state");
+        l.state = State.RELEASED; payable(l.borrower).transfer(l.amount);
         emit Released(loanId, l.borrower, l.amount, keccak256(abi.encodePacked(loanId, l.borrower, l.amount, block.timestamp)));
     }
 
     function refund(uint256 loanId) external {
         require(msg.sender == platform, "only platform");
         Loan storage l = loans[loanId];
-        require(l.state == State.FUNDS_LOCKED, "not locked");
-        l.state = State.REFUNDED;
-        payable(l.investor).transfer(l.amount);
+        require(l.state == State.FUNDS_LOCKED, "state");
+        l.state = State.REFUNDED; payable(l.investor).transfer(l.amount);
         emit Refunded(loanId, l.investor, l.amount, keccak256(abi.encodePacked(loanId, l.investor, l.amount, block.timestamp)));
     }
 }
 ```
 
-> **Nota:** Código didático — revisão de segurança/auditoria obrigatória antes de produção.
-
----
-
-## 🔗 APIs
-
-- **Onboarding** (KYC)
-- **Credit Analysis** (score/decisão)
-- **Wallet** (saldo, pix, transferências)
-- **Escrow** (reconciliation, proof-of-funds, eventos)
-
-> **TODO:** Incluir exemplos de chamadas API (curl / JSON) após documentação final e mapeamento das rotas QI Tech.
-
----
-
-## 🖼️ Diagramas
-
-- [Fluxo de Aplicação] (fluxoaplicacao.png)
-
-- Fluxo de API.
-  [Fluxo de API] (fluxoapi.png)
-
----
-
-## 📊 KPIs / Métricas de Sucesso
-
-- **Tempo médio de onboarding:** target < 5 min.
-- **% de contratos liberados após validação:** target > 95%.
-- **% de pagamentos on-time:** target > 90%.
-- **% de reconciliação automática de escrow:** target > 99%.
-
----
-
-## 📅 Roadmap
-
-- **Collateral Management:** registro e avaliação de garantias.
-- **Collections / Renegociação:** fluxo de cobrança, notificações e renegociação.
-- **Rate Engine / Amortization:** cálculos SAC, PRICE, juros e multas.
-- **Secondary Market:** permitir venda de posição por investidores.
-- **IA externa no score:** pesquisa/PoC para uso de dados alternativos (ex.: redes sociais) — _roadmap apenas, não será desenvolvido no hackathon_.
-
----
-
-## 💡 Diferenciais - “Wow factor”
-
-- **Chatbot trilíngue (EN/ES/PT-BR).**
-- **Blockchain Proof-of-Existence** (registro hash-only).
-- **Smart Contract no escrow:** automação e redução de intermediários (gas-fee only).
-- **Opções de saque para o tomador:** valor cheio (juros maiores) ou parcelado (juros menores).
-
----
-
-## 🔧 Considerações Técnicas
-
-**Infraestrutura**
-
-- Banco de dados relacional (Postgres / MySQL).
-- Integração BaaS (wallets, Pix, geração de cobranças).
-- Monitoramento: logs, métricas, alertas (Prometheus / Grafana).
-
-**Segurança**
-
-- KYC/Onboarding integrado via QI APIs.
-- AML / Sanctions Screening.
-- Assinatura digital de contratos (CCB) e armazenamento seguro de documentos.
-- Compliance LGPD (consent / right-to-be-forgotten pipeline).
-
----
-
-## ▶️ How to Run / Demo Script
-
-> **TODO:** Incluir passo-a-passo detalhado para demo:
-
-- Ex.: 1) criar investidor → 2) criar loanId → 3) investidor `deposit(loanId)` (hold) → 4) tomador onboarding + credit_analysis → 5) plataforma chama `release(loanId)` → 6) registrar pagamentos.
-
 ---
 
 ## 🙏 Agradecimentos
 
-Um agradecimento especial à equipe da **Poli Júnior** e à **QI Tech** pela oportunidade e abertura das APIs.
+Um agradecimento especial à equipe da **Poli Júnior** e à **QI TECH** pela oportunidade!
 
----
-
-## ⚠️ Disclaimer
-
-A QI Tech já utiliza blockchain e Web3 em APIs de câmbio e stablecoin. Nossa proposta é **expandir** essa infraestrutura para o mercado de crédito P2P, com foco em escrow automatizado, transparência e rastreabilidade (hash-only).  
-Este README é uma versão MVP/POC — itens de produção (auditoria de smart contracts, monitoramento, GL, collections) estão no roadmap.
-
-```
-
-```
+> Última atualização: 30/09/2025

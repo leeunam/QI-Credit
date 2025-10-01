@@ -1,0 +1,28 @@
+{
+  "name": "qi-credit-blockchain",
+  "version": "0.1.0",
+  "description": "Contratos de Blockchain para a plataforma QI Credit",
+  "scripts": {
+    "compile": "npx hardhat compile",
+    "test": "npx hardhat test",
+    "deploy": "npx hardhat run scripts/deploy.js --network",
+    "deploy:local": "npm run deploy localhost",
+    "deploy:sepolia": "npm run deploy sepolia"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "hardhat": "^2.12.6"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.8.1"
+  },
+  "keywords": [
+    "fintech",
+    "credit",
+    "blockchain",
+    "smart-contracts",
+    "evm"
+  ],
+  "author": "QI Credit Team",
+  "license": "MIT"
+}
