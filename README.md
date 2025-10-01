@@ -1,6 +1,6 @@
 # 🌐 QI Credit – Plataforma P2P com Escrow On-Chain
 
-![logo](./logo.png)
+<img src="/docs/logo.png" alt="QI Credit Logo" width="200" height="auto">
 
 > Infraestrutura P2P de crédito com escrow automatizado via smart contract e registro hash-only em blockchain para transparência, prova de existência e mitigação de risco.
 
