@@ -15,6 +15,11 @@ build/
 # Logs
 logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
 # Runtime data
 pids
@@ -223,3 +228,15 @@ docker-compose.override.yml
 *.swp
 *~
 \#*\#
+
+# --- Adições vindas do branch main (não estavam no bloco docs) ---
+node_modules
+dist-ssr
+*.local
+# Editor directories and files
+.vscode/*
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
