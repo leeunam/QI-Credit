@@ -68,14 +68,19 @@ erDiagram
 		timestamp created_at
 	}
 	ESCROW_EVENTS {
-		uuid id PK
-		uuid loan_id FK
-		string event_type
-		numeric amount
-		text tx_hash
-		text event_hash
-		timestamp created_at
-	}
+        uuid id PK
+        uuid loan_id FK
+        varchar escrow_address
+        varchar sender_address
+        varchar receiver_address
+        string event_type
+        string escrow_status
+        numeric amount
+        text tx_hash
+        text event_hash
+        jsonb metadata
+        timestamp created_at
+    }
 	REPAYMENTS {
 		uuid id PK
 		uuid loan_id FK
@@ -145,7 +150,42 @@ Reserva (prova de fundos) pré liberação definitiva.
 
 ### 2.5 `escrow_events`
 
-Registra trilha on/off chain hash-only. `event_type`: `DEPOSITED`, `RELEASED`, `REFUNDED`, `PENALTY`, `PARTIAL_PAYMENT`.
+Registra trilha completa on/off chain com dados blockchain detalhados.
+
+| Campo | Tipo | Regras | Observações |
+|-------|------|--------|-------------|
+| id | UUID | PK | gerado app |
+| loan_id | UUID | FK NOT NULL | referência ao empréstimo |
+| escrow_address | VARCHAR(128) | NOT NULL | endereço do contrato escrow |
+| sender_address | VARCHAR(128) | NULL | origem dos fundos |
+| receiver_address | VARCHAR(128) | NULL | destino dos fundos |
+| event_type | VARCHAR(32) | NOT NULL | DEPOSITED, RELEASED, REFUNDED, PENALTY |
+| escrow_status | VARCHAR(32) | NOT NULL | estado atual consolidado |
+| amount | NUMERIC(18,2) | NULL | valor da transação |
+| tx_hash | TEXT | NULL | hash transação blockchain |
+| event_hash | TEXT | NULL | hash do evento para verificação |
+| metadata | JSONB | NULL | dados blockchain adicionais |
+| created_at | TIMESTAMP | NOT NULL | timestamp do evento |
+
+**Estados do `escrow_status`:**
+- `PENDING`: Aguardando confirmação blockchain
+- `DEPOSITED`: Fundos bloqueados com sucesso
+- `RELEASED`: Fundos liberados para tomador
+- `REFUNDED`: Fundos devolvidos ao investidor
+- `FAILED`: Transação falhou
+
+**Estrutura típica do `metadata`:**
+```json
+{
+  "gas_used": 21000,
+  "gas_price": "20000000000", 
+  "block_number": 18450123,
+  "block_timestamp": "2025-09-30T14:30:00Z",
+  "confirmation_count": 12,
+  "network": "ethereum",
+  "contract_version": "1.0.0"
+}
+```
 
 ### 2.6 `repayments`
 
@@ -178,15 +218,15 @@ Permite comparar mutações (ex: atualização de status) via JSON diff.
 
 ## 4. Índices Recomendados
 
-| Tabela             | Índice                                           | Uso                   |
-| ------------------ | ------------------------------------------------ | --------------------- |
-| users              | (document), (email)                              | autenticação / lookup |
-| marketplace_offers | (status, risk_profile)                           | listagens marketplace |
-| loan_contracts     | (status), (borrower_id), (lender_id), (offer_id) | consultas dashboard   |
-| escrow_events      | (loan_id, created_at)                            | timeline eventos      |
-| repayments         | (loan_id, installment_number) UNIQUE             | cálculo schedule      |
-| transactions       | (loan_id), (digital_account_id, created_at)      | extratos              |
-| audit_logs         | (entity, entity_id)                              | auditoria             |
+| Tabela             | Índice                                                           | Uso                           |
+| ------------------ | ---------------------------------------------------------------- | ----------------------------- |
+| users              | (document), (email)                                              | autenticação / lookup         |
+| marketplace_offers | (status, risk_profile)                                           | listagens marketplace         |
+| loan_contracts     | (status), (borrower_id), (lender_id), (offer_id)                | consultas dashboard           |
+| escrow_events      | (loan_id, created_at), (escrow_address), (escrow_status)         | timeline eventos, auditoria   |
+| repayments         | (loan_id, installment_number) UNIQUE                             | cálculo schedule              |
+| transactions       | (loan_id), (digital_account_id, created_at)                      | extratos                      |
+| audit_logs         | (entity, entity_id)                                              | auditoria                     |
 
 ---
 
@@ -272,13 +312,18 @@ CREATE TABLE holds (
 );
 
 CREATE TABLE escrow_events (
-	id UUID PRIMARY KEY,
-	loan_id UUID NOT NULL REFERENCES loan_contracts(id) ON DELETE CASCADE,
-	event_type VARCHAR(32) NOT NULL,
-	amount NUMERIC(18,2),
-	tx_hash TEXT,
-	event_hash TEXT,
-	created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    id UUID PRIMARY KEY,
+    loan_id UUID NOT NULL REFERENCES loan_contracts(id) ON DELETE CASCADE,
+    escrow_address VARCHAR(128) NOT NULL,
+    sender_address VARCHAR(128),
+    receiver_address VARCHAR(128),
+    event_type VARCHAR(32) NOT NULL,
+    escrow_status VARCHAR(32) NOT NULL,
+    amount NUMERIC(18,2),
+    tx_hash TEXT,
+    event_hash TEXT,
+    metadata JSONB,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE repayments (
@@ -322,9 +367,13 @@ CREATE TABLE audit_logs (
 CREATE INDEX idx_offers_status ON marketplace_offers(status);
 CREATE INDEX idx_loans_status ON loan_contracts(status);
 CREATE INDEX idx_events_loan ON escrow_events(loan_id, created_at);
+CREATE INDEX idx_events_address ON escrow_events(escrow_address);
+CREATE INDEX idx_events_status ON escrow_events(escrow_status);
+CREATE INDEX idx_events_metadata ON escrow_events USING GIN(metadata);
 CREATE INDEX idx_repayments_loan ON repayments(loan_id, installment_number);
 CREATE INDEX idx_tx_loan ON transactions(loan_id);
 CREATE INDEX idx_audit_entity ON audit_logs(entity, entity_id);
+
 ```
 
 ---
@@ -349,6 +398,34 @@ SELECT l.id, l.status, COUNT(e.id) AS total_events
 FROM loan_contracts l
 LEFT JOIN escrow_events e ON e.loan_id = l.id
 GROUP BY l.id;
+
+-- Auditoria completa de escrow por loan
+SELECT 
+  ee.event_type,
+  ee.escrow_status,
+  ee.amount,
+  ee.sender_address,
+  ee.receiver_address,
+  ee.metadata->>'block_number' as block_number,
+  ee.metadata->>'gas_used' as gas_used,
+  ee.created_at
+FROM escrow_events ee
+WHERE ee.loan_id = 'uuid-do-loan'
+ORDER BY ee.created_at;
+
+-- Análise de gas por tipo de evento
+SELECT 
+  event_type,
+  AVG((metadata->>'gas_used')::numeric) as avg_gas,
+  COUNT(*) as total_events
+FROM escrow_events 
+WHERE metadata->>'gas_used' IS NOT NULL
+GROUP BY event_type;
+
+-- Eventos pendentes de confirmação blockchain
+SELECT * FROM escrow_events 
+WHERE escrow_status = 'PENDING' 
+  AND created_at < NOW() - INTERVAL '10 minutes';
 ```
 
 ---
