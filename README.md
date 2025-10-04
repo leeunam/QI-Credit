@@ -224,17 +224,30 @@ docker (opcional para Postgres)
 git clone <repo>
 cd QI-Credit
 cp .env.example .env
-npm run setup   # instala tudo (root + frontend + backend + blockchain)
+npm run setup:env   # cria .env a partir do .env.example
+npm run setup       # instala todas as dependências (root + workspaces)
+```
+### Configurar Ambiente
+
+Após rodar `npm run setup:env`, edite o arquivo `.env` criado com suas configurações:
+
+```bash
+# Editar configurações essenciais
+nano .env  # ou seu editor preferido
+
+# Principais variáveis para ajustar:
+# DB_PASSWORD=sua_senha_postgres
+# QITECH_API_KEY=sua_chave_qitech
+# JWT_SECRET=seu_jwt_secret
+# PRIVATE_KEY=sua_private_key_blockchain
 ```
 
 ### Rodar Ambiente
 
 ```bash
-npm run dev     # orquestra frontend + backend (ajustar scripts)
-# backend isolado
-cd backend && npm start
-# frontend isolado
-cd frontend && npm run dev
+npm run dev     # orquestra frontend + backend
+cd backend && npm start # backend isolado
+cd frontend && npm run dev # frontend isolado
 ```
 
 ### Scripts Principais
@@ -246,6 +259,10 @@ npm run build    # build frontend/backend
 npm run lint     # lint
 npm run type-check
 npm run clean
+npm run setup:env    # cria .env do .env.example
+npm run setup        # instalação completa (env + deps)
+npm run test         # testes (backend + blockchain)
+npm run deploy:contracts  # deploy dos smart contracts
 ```
 
 ---

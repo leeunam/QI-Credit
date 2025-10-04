@@ -1,5 +1,3 @@
-// Migration: create_transactions
-
 exports.up = async function (knex) {
   await knex.schema.createTable('transactions', (table) => {
     table.uuid('id').primary();

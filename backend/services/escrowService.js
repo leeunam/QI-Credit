@@ -1,20 +1,56 @@
 const blockchainService = require('./blockchainService');
 const config = require('../config/config');
+const { EscrowTransaction, Loan } = require('../../database/models');
+const db = require('../config/database');
 
-// NOTE: In a full implementation we'd import a DB layer (e.g., knex instance) to persist
-// escrow records & events. For hackathon demonstration we mock persistence in-memory
-// while leaving clearly marked extension points.
+// registros e eventos de custódia para a demonstração do hackathon estão mocados para simular no hack
 
 const isMockMode = config.BLOCKCHAIN_MOCK_MODE === 'true';
 
 class EscrowService {
   constructor() {
-    // In-memory stores (hackathon scope). Replace with DB repositories.
-    this.escrows = new Map(); // key: escrowId -> escrow object
-    this.events = []; // chronological list of events
+    this.escrows = new Map();
+    this.events = []; 
   }
 
-  // Create an escrow (deploy or simulate deposit)
+    async createDeposit(loanId, fromUserId, toUserId, amount) {
+    const loanData = await db('loan_contracts').where('id', loanId).first();
+    if (!loanData) throw new Error('Loan not found');
+    
+    const loan = new Loan(loanData);
+    if (!loan.isActive()) {
+      throw new Error('Loan is not active');
+    }
+    
+    const transaction = new EscrowTransaction({
+      loan_id: loanId,
+      from_user_id: fromUserId,
+      to_user_id: toUserId,
+      amount,
+      transaction_type: 'DEPOSIT',
+      status: 'PENDING'
+    });
+    
+    const validation = transaction.validate();
+    if (!validation.isValid) {
+      throw new Error(`Invalid transaction: ${validation.errors.join(', ')}`);
+    }
+    
+    try {
+      const txHash = await blockchainService.deposit(loanId, amount);
+      
+      transaction.markAsCompleted(txHash);
+      
+      await db('escrow_events').insert(transaction.toDatabase());
+      
+      return transaction;
+    } catch (error) {
+      transaction.markAsFailed(error.message);
+      await db('escrow_events').insert(transaction.toDatabase());
+      throw error;
+    }
+  }
+
   async createEscrow({
     escrowId,
     borrowerAddress,
@@ -115,7 +151,6 @@ class EscrowService {
     return { success: true, events: filtered };
   }
 
-  // Private helper to register events (would persist to DB table escrow_events in production)
   _pushEvent(escrowId, type, payload) {
     this.events.push({
       id: `evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,

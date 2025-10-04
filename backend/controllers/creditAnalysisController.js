@@ -1,9 +1,9 @@
 const creditAnalysisService = require('../services/creditAnalysisService');
+const { User, CreditAnalysis } = require('../../database/models');
 const bankingAsAService = require('../services/bankingAsAService');
 const lendingAsAService = require('../services/lendingAsAService');
 const blockchainService = require('../services/blockchainService');
 
-// Credit Analysis Controller (using QITech API)
 const submitIndividualCreditAnalysis = async (req, res) => {
   try {
     const {
@@ -13,30 +13,58 @@ const submitIndividualCreditAnalysis = async (req, res) => {
       source, userId
     } = req.body;
     
-    // Validate required fields according to QITech API
+    // Validações básicas
     if (!document || !name || !email) {
       return res.status(400).json({ 
         success: false, 
         error: 'Document, name, and email are required' 
       });
     }
+
+    // Tentar validação com model se possível
+    try {
+      const user = new User({ 
+        document, 
+        name, 
+        email, 
+        monthly_income: monthly_income || 0 
+      });
+      
+      const userValidation = user.validate();
+      if (!userValidation.isValid) {
+        return res.status(400).json({
+          success: false,
+          error: 'User validation failed',
+          details: userValidation.errors
+        });
+      }
+
+      if (!user.canBorrow()) {
+        return res.status(400).json({
+          success: false,
+          error: 'User is not eligible for credit'
+        });
+      }
+    } catch (modelError) {
+      // Se o model não funcionar, continuar com validação básica
+      console.log('Model validation skipped:', modelError.message);
+    }
     
-    // Prepare data for QITech API using correct field names
     const userData = {
       id: id || creditAnalysisService.generateRequestId().split('_')[1],
       registration_id: registration_id || creditAnalysisService.generateRequestId().split('_')[1],
       credit_request_date: credit_request_date || new Date().toISOString(),
       credit_type: credit_type || 'credit_card',
       name,
-      document: document, // Changed to match QITech API
-      birthdate: birthdate || birthdate || new Date().toISOString().split('T')[0],
+      document: document, 
+      birthdate: birthdate || new Date().toISOString().split('T')[0],
       email,
       nationality: nationality || 'BRA',
       gender: gender || 'male',
       mother_name: mother_name || 'Not provided',
       father_name: father_name || 'Not provided',
-      monthly_income: monthly_income || monthlyIncome,
-      declared_assets: declared_assets || declaredAssets || 0,
+      monthly_income: monthly_income || 0,
+      declared_assets: declared_assets || 0,
       occupation: occupation || 'Not specified',
       address: address || {
         country: 'BRA',
@@ -69,7 +97,6 @@ const submitIndividualCreditAnalysis = async (req, res) => {
       userId: userId || null
     };
     
-    // Submit to QITech API
     const result = await creditAnalysisService.submitIndividualCreditAnalysis(userData);
     
     if (result.success) {
@@ -78,7 +105,7 @@ const submitIndividualCreditAnalysis = async (req, res) => {
       res.status(400).json(result);
     }
   } catch (error) {
-    console.error('Error in submitIndividualCreditAnalysis controller:', error);
+    console.error('Error in individual credit analysis controller:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -91,7 +118,6 @@ const submitBusinessCreditAnalysis = async (req, res) => {
       address, shareholders, financial, userId
     } = req.body;
     
-    // Validate required fields according to QITech API
     if (!document || (!legal_name && !trading_name) || !email) {
       return res.status(400).json({ 
         success: false, 
@@ -99,18 +125,17 @@ const submitBusinessCreditAnalysis = async (req, res) => {
       });
     }
     
-    // Prepare data for QITech API using correct field names
     const businessData = {
       id: id || creditAnalysisService.generateRequestId().split('_')[1],
       credit_request_date: credit_request_date || new Date().toISOString(),
       credit_type: credit_type || 'credit_card',
-      legal_name: legal_name || legal_name,
-      trading_name: trading_name || tradingName || legal_name || legal_name,
-      document: document, // Changed to match QITech API
-      constitution_date: constitution_date || constitutionDate || new Date().toISOString().split('T')[0],
-      constitution_type: constitution_type || constitutionType || 'llc',
+      legal_name: legal_name,
+      trading_name: trading_name || legal_name,
+      document: document,
+      constitution_date: constitution_date || new Date().toISOString().split('T')[0],
+      constitution_type: constitution_type || 'llc',
       email,
-      monthly_revenue: monthly_revenue || monthlyRevenue,
+      monthly_revenue: monthly_revenue || 0,
       address: address || {
         country: 'BRA',
         street: 'Not specified',
@@ -132,7 +157,6 @@ const submitBusinessCreditAnalysis = async (req, res) => {
       userId: userId || null
     };
     
-    // Submit to QITech API
     const result = await creditAnalysisService.submitBusinessCreditAnalysis(businessData);
     
     if (result.success) {
@@ -151,7 +175,6 @@ const getCreditScore = async (req, res) => {
     const { userId } = req.params;
     const { entityType = 'natural_person' } = req.query;
     
-    // Get credit score from service
     const result = await creditAnalysisService.getCreditScore(userId, entityType);
     
     res.status(200).json(result);
@@ -166,7 +189,6 @@ const updateCreditAnalysisStatus = async (req, res) => {
     const { analysisId } = req.params;
     const { status, event_date, entityType = 'natural_person' } = req.body;
     
-    // Validate input
     if (!status) {
       return res.status(400).json({ 
         success: false, 
@@ -174,7 +196,6 @@ const updateCreditAnalysisStatus = async (req, res) => {
       });
     }
     
-    // Update status in QITech API
     const result = await creditAnalysisService.updateCreditAnalysisStatus(
       analysisId, 
       status, 
@@ -192,24 +213,13 @@ const updateCreditAnalysisStatus = async (req, res) => {
   }
 };
 
-// Full loan application process controller
 const applyForLoan = async (req, res) => {
   try {
     const {
-      userId,
-      document,
-      name,
-      email,
-      phone,
-      birthDate,
-      monthlyIncome,
-      loanAmount,
-      loanTerm,
-      purpose,
-      address
+      userId, document, name, email, phone, birthDate,
+      monthlyIncome, loanAmount, loanTerm, purpose, address
     } = req.body;
     
-    // Step 1: Submit credit analysis
     const creditData = {
       document,
       name,
@@ -230,7 +240,6 @@ const applyForLoan = async (req, res) => {
       return res.status(400).json(creditResult);
     }
     
-    // Step 2: If credit analysis is successful, proceed to banking
     const accountResult = await bankingAsAService.createDigitalAccount({
       document,
       name,
@@ -247,15 +256,14 @@ const applyForLoan = async (req, res) => {
       return res.status(400).json(accountResult);
     }
     
-    // Step 3: Create lending contract
     const contractData = {
       borrower_document: document,
       amount: loanAmount,
-      interest_rate: 12.5, // This would typically come from credit analysis result
+      interest_rate: 12.5,
       installments: loanTerm,
       contract_type: 'CCB',
       description: `Loan for ${purpose}`,
-      loanId: creditResult.analysisId, // Link to credit analysis
+      loanId: creditResult.analysisId,
       userId
     };
     
@@ -265,24 +273,20 @@ const applyForLoan = async (req, res) => {
       return res.status(400).json(contractResult);
     }
     
-    // Step 4: Calculate payment schedule
     const paymentSchedule = lendingAsAService.calculateLoanSchedule(
       loanAmount, 
-      12.5, // interest rate
+      12.5,
       loanTerm
     );
     
-    // Step 5: Set up blockchain escrow
-    // This is a simplified version - in reality, you'd need more details
     const escrowResult = await blockchainService.depositToEscrow(
       contractResult.contractId,
-      'borrower_address_placeholder', // Would come from user's wallet
-      'lender_address_placeholder',   // Would come from lender's wallet
-      'arbitrator_address_placeholder', // Would come from system
+      'borrower_address_placeholder', 
+      'lender_address_placeholder',
+      'arbitrator_address_placeholder',
       loanAmount
     );
     
-    // Return comprehensive result
     res.status(200).json({
       success: true,
       applicationId: contractResult.contractId,

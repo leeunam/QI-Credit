@@ -1,5 +1,3 @@
-// Migration: create_audit_logs
-
 exports.up = async function (knex) {
   await knex.schema.createTable('audit_logs', (table) => {
     table.uuid('id').primary();

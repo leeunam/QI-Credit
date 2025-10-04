@@ -1,5 +1,3 @@
-// Migration: create_credit_analyses
-
 exports.up = async function (knex) {
   await knex.schema.createTable('credit_analyses', (table) => {
     table.uuid('id').primary();

@@ -1,11 +1,12 @@
 # Dependencies
-node_modules/
+**node_modules/
 .npm/
 .yarn/cache
 .yarn/unplugged
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+**.env
 
 # Production builds
 dist/
@@ -24,6 +25,7 @@ lerna-debug.log*
 dist
 dist-ssr
 *.local
+
 # Editor directories and files
 .vscode/*
 *.suo

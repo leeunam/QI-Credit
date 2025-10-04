@@ -1,5 +1,3 @@
-// Migration: create_marketplace_offers
-
 exports.up = async function (knex) {
   await knex.schema.createTable('marketplace_offers', (table) => {
     table.uuid('id').primary();
