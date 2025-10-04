@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { BalanceCard } from '../components/wallet/BalanceCard';
 import { QuickActions } from '../components/wallet/QuickActions';
 import { TransactionList } from '../components/wallet/TransactionList';

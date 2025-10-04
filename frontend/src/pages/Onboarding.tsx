@@ -1,4 +1,3 @@
-import React from 'react';
 import { OnboardingProvider, useOnboarding } from '@/contexts/OnboardingContext';
 import { ProgressBar } from '@/components/onboarding/ProgressBar';
 import { Step1BasicData } from '@/components/onboarding/Step1BasicData';

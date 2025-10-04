@@ -1,130 +1,114 @@
-import { Link, useNavigate } from "react-router-dom";
-import { Home, FileText, DollarSign, User, Settings, Menu } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import * as React from "react";
+import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { CustomButton } from '@/components/ui/button-variants';
+import { Menu, User, LogOut, Wallet, CreditCard} from 'lucide-react';
 
-const Header = () => {
-  const navigate = useNavigate();
+interface HeaderProps {
+  onLoginClick: () => void;
+  onSignupClick: () => void;
+  onMobileMenuClick: () => void;
+}
 
-  const navigationLinks = [
-    { label: "Assinar Contrato Digital", path: "/IndexContract", icon: FileText },
-    { label: "Requisitar Crédito", path: "/credit-request", icon: DollarSign },
-    { label: "Voltar ao Menu", path: "/", icon: Home },
-  ];
+export const Header: React.FC<HeaderProps> = ({ 
+  onLoginClick, 
+  onSignupClick, 
+  onMobileMenuClick 
+}) => {
+  const { user, logout } = useAuth();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-[var(--color-tertiary)] bg-white shadow-sm">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="h-8 w-8 rounded-lg bg-[var(--color-primary)] flex items-center justify-center">
-              <span className="text-white font-display font-bold text-body-3">C</span>
+          <div className="flex items-center">
+            <div className="text-h4 font-bold text-primary">
+              Plataforma
             </div>
-            <span className="font-display font-bold text-h4 text-[var(--text-dark)] hidden sm:block">
-              Contratos
-            </span>
-          </Link>
-
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-1">
-            {navigationLinks.map((link) => (
-              <Button
-                key={link.path}
-                variant="ghost"
-                onClick={() => navigate(link.path)}
-                className="text-body-4 font-medium text-[var(--text-dark)] hover:text-[var(--color-primary)] hover:bg-[var(--bg-light)]"
-              >
-                <link.icon className="mr-2 h-4 w-4" />
-                {link.label}
-              </Button>
-            ))}
-          </nav>
-
-          {/* Desktop Profile & Settings */}
-          <div className="hidden md:flex items-center space-x-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full">
-                  <User className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-white">
-                <DropdownMenuItem onClick={() => navigate("/perfil")} className="cursor-pointer">
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Perfil</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/configuracoes")} className="cursor-pointer">
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Configurações</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer text-[var(--color-error)]">
-                  Sair
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
 
-          {/* Mobile Menu */}
-          <Sheet>
-            <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] bg-white">
-              <div className="flex flex-col space-y-4 mt-8">
-                <h2 className="font-display font-bold text-h4 mb-4">Menu</h2>
-                
-                {navigationLinks.map((link) => (
-                  <Button
-                    key={link.path}
-                    variant="ghost"
-                    onClick={() => navigate(link.path)}
-                    className="justify-start text-body-3 font-medium text-[var(--text-dark)] hover:text-[var(--color-primary)] hover:bg-[var(--bg-light)]"
-                  >
-                    <link.icon className="mr-2 h-4 w-4" />
-                    {link.label}
-                  </Button>
-                ))}
-                
-                <div className="border-t border-[var(--color-tertiary)] pt-4 mt-4">
-                  <Button
-                    variant="ghost"
-                    onClick={() => navigate("/perfil")}
-                    className="justify-start w-full text-body-3 font-medium text-[var(--text-dark)] hover:text-[var(--color-primary)] hover:bg-[var(--bg-light)]"
-                  >
-                    <User className="mr-2 h-4 w-4" />
-                    Perfil
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    onClick={() => navigate("/configuracoes")}
-                    className="justify-start w-full text-body-3 font-medium text-[var(--text-dark)] hover:text-[var(--color-primary)] hover:bg-[var(--bg-light)]"
-                  >
-                    <Settings className="mr-2 h-4 w-4" />
-                    Configurações
-                  </Button>
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-8">
+            <Link to="/" className="text-body-3 text-muted-foreground hover:text-foreground transition-colors">
+              Início
+            </Link>
+            {user && (
+              <>
+                <Link to="/wallet" className="text-body-3 text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                  <Wallet className="h-4 w-4" />
+                  Carteira
+                </Link>
+                <Link to="/credit-request" className="text-body-3 text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  Solicitar Crédito
+                </Link>
+              </>
+            )}
+            <a href="#features" className="text-body-3 text-muted-foreground hover:text-foreground transition-colors">
+              Recursos
+            </a>
+            <a href="#about" className="text-body-3 text-muted-foreground hover:text-foreground transition-colors">
+              Sobre
+            </a>
+          </nav>
+
+          {/* Auth Buttons */}
+          <div className="flex items-center space-x-4">
+            {user ? (
+              <div className="flex items-center space-x-4">
+                <div className="hidden sm:flex items-center space-x-2">
+                  <User size={18} className="text-muted-foreground" />
+                  <span className="text-body-4 text-foreground font-medium">
+                    {user.name}
+                  </span>
                 </div>
+                <CustomButton
+                  variant="outline"
+                  onClick={logout}
+                  className="hidden sm:flex items-center space-x-2"
+                >
+                  <LogOut size={16} />
+                  <span>Sair</span>
+                </CustomButton>
+                <CustomButton
+                  variant="outline"
+                  onClick={logout}
+                  className="sm:hidden p-2"
+                >
+                  <LogOut size={16} />
+                </CustomButton>
               </div>
-            </SheetContent>
-          </Sheet>
+            ) : (
+              <>
+                <CustomButton
+                  variant="outline-secondary"
+                  onClick={onLoginClick}
+                  className="hidden sm:inline-flex"
+                >
+                  Entrar
+                </CustomButton>
+                <CustomButton
+                  variant="gradient"
+                  onClick={onSignupClick}
+                  className="hidden sm:inline-flex"
+                >
+                  Cadastrar
+                </CustomButton>
+              </>
+            )}
+
+            {/* Mobile menu button */}
+            <CustomButton
+              variant="outline"
+              onClick={onMobileMenuClick}
+              className="md:hidden p-2"
+            >
+              <Menu size={20} />
+            </CustomButton>
+          </div>
         </div>
       </div>
     </header>
   );
 };
-
-export default Header;
