@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { PlusCircle, Search, TrendingUp } from 'lucide-react';
-import { Header } from '@/components/dashboard/Header';
+import { Header2 } from '@/components/layout/Header2';
 import { WalletCard } from '@/components/dashboard/WalletCard';
 import { OfferCard } from '@/components/dashboard/OfferCard';
 import { LoanCard } from '@/components/dashboard/LoanCard';
@@ -74,14 +74,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header
-        balance={data?.balance || 0}
-        unreadNotifications={unreadCount}
-        onNotificationsClick={() => setNotificationsOpen(true)}
-        onProfileClick={() => toast({ title: 'Perfil', description: 'Em desenvolvimento' })}
-        onLogout={() => toast({ title: 'Logout', description: 'Saindo...' })}
-      />
-
+      <Header2/>
       <main className="container mx-auto px-4 md:px-6 pt-20 md:pt-24 pb-8">
         {loading ? (
           <div className="space-y-6">

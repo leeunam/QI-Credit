@@ -5,6 +5,10 @@ import { TransactionList } from '../components/wallet/TransactionList';
 import { ActionModal } from '@/components/wallet/ActionModal';
 import { useWallet } from '../contexts/walletContext';
 import { toast } from '@/hooks/use-toast';
+import { Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "../components/ui/button";
+import { Header2 } from '@/components/layout/Header2';
 
 const Wallet = () => {
   const { balance, transactions } = useWallet();
@@ -36,9 +40,17 @@ const Wallet = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      <Header2/>
       <div className="bg-white border-b border-border">
         <div className="container mx-auto px-4 py-6">
+          <div className="mb-3">
+            <Link to="/dashboard">
+              <Button variant="outline" size="sm">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Voltar
+              </Button>
+            </Link>
+          </div>
           <h1 className="text-h1 font-display font-bold text-foreground">
             Carteira Digital
           </h1>

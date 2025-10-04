@@ -11,6 +11,7 @@ import { DocumentUpload } from '@/components/credit/DocumentUpload';
 import { ReviewSubmit } from '@/components/credit/ReviewSubmit';
 import { useCredit } from '@/contexts/CreditContext';
 import { useToast } from '@/hooks/use-toast';
+import { Header2 } from '@/components/layout/Header2';
 
 const steps = [
   { id: 1, title: 'Pessoais', description: 'Informações básicas' },
@@ -105,7 +106,7 @@ const CreditRequest: React.FC = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
+        <Header2/>
         <div className="mb-8">
           <Button
             variant="ghost"

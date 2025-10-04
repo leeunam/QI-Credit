@@ -1,7 +1,10 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, PenTool, Shield, Users } from 'lucide-react';
+import { FileText, PenTool, Shield, Users, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Header2 } from '@/components/layout/Header2'; 
+import { useNotifications } from '@/hooks/useNotifications';
+import { useState } from 'react';
 
 const Index = () => {
   const features = [
@@ -27,11 +30,33 @@ const Index = () => {
     }
   ];
 
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
+      {/* Header */}
+      <Header2
+        balance={0} // passe o saldo real se tiver
+        unreadNotifications={unreadCount}
+        onNotificationsClick={() => setNotificationsOpen(true)}
+        onProfileClick={() => console.log('Abrir perfil')}
+        onLogout={() => console.log('Logout')}
+      />
+
+      {/* Todo: adicionar o componente NotificationsPanel controlado por notificationsOpen */}
+
+      {/* Resto da tela */}
       <section className="bg-gradient-to-br from-primary/10 via-secondary/5 to-background py-20">
         <div className="container mx-auto px-4 text-center">
+          <div className="flex justify-start">
+            <Link to="/dashboard">
+              <Button variant="outline" size="sm">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Voltar
+              </Button>
+            </Link>
+          </div>
           <h1 className="text-h1 font-display mb-6 text-foreground">
             Contrato Digital + Assinatura
           </h1>
@@ -64,7 +89,6 @@ const Index = () => {
               seus processos contratuais de forma segura e eficiente.
             </p>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature, index) => (
               <Card key={index} className="card-base text-center p-6 hover:shadow-lg transition-shadow">
@@ -94,7 +118,6 @@ const Index = () => {
                     O demo inclui um contrato de prestação de serviços com 
                     duas partes para assinatura.
                   </p>
-                  
                   <div className="space-y-3 mb-6">
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-primary rounded-full"></div>
@@ -113,14 +136,12 @@ const Index = () => {
                       <span className="text-body-3">Histórico de assinaturas</span>
                     </div>
                   </div>
-
                   <Link to="/contrato/1">
                     <Button className="btn-primary">
                       Acessar Demo
                     </Button>
                   </Link>
                 </div>
-                
                 <div className="bg-gradient-to-br from-primary/5 to-secondary/5 p-6 rounded-lg">
                   <div className="space-y-4">
                     <div className="flex items-center gap-3">
@@ -132,7 +153,6 @@ const Index = () => {
                         <p className="text-body-4 text-muted-foreground">Contratante e Contratado</p>
                       </div>
                     </div>
-                    
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-secondary/10 rounded-full flex items-center justify-center">
                         <FileText className="h-5 w-5 text-secondary" />
@@ -142,7 +162,6 @@ const Index = () => {
                         <p className="text-body-4 text-muted-foreground">Prestação de Serviços</p>
                       </div>
                     </div>
-                    
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-warning/10 rounded-full flex items-center justify-center">
                         <PenTool className="h-5 w-5 text-warning" />
@@ -159,6 +178,7 @@ const Index = () => {
           </div>
         </div>
       </section>
+
 
       {/* Footer */}
       <footer className="bg-foreground text-background py-8">
