@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
+const { RATE_LIMITS } = require('./constants');
 
 // Rotas principais (que já existem)
 const creditAnalysisRoutes = require('../apis/credit-analysis/routes');
@@ -23,9 +25,37 @@ const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 
+// Rate limiting middleware
+const defaultLimiter = rateLimit({
+  windowMs: RATE_LIMITS.DEFAULT.windowMs,
+  max: RATE_LIMITS.DEFAULT.max,
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const uploadLimiter = rateLimit({
+  windowMs: RATE_LIMITS.UPLOAD.windowMs,
+  max: RATE_LIMITS.UPLOAD.max,
+  message: 'Too many upload requests, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const authLimiter = rateLimit({
+  windowMs: RATE_LIMITS.AUTH.windowMs,
+  max: RATE_LIMITS.AUTH.max,
+  message: 'Too many authentication attempts, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.use(helmet());
 app.use(cors());
 app.use(morgan('combined'));
+
+// Apply default rate limiter to all routes
+app.use(defaultLimiter);
 
 app.use(
   express.json({
@@ -38,9 +68,9 @@ app.use(
 
 app.use(express.urlencoded({ extended: true }));
 
-// Rotas de Storage e Auth (novas)
-app.use('/api/auth', authRoutes);
-app.use('/api/storage', storageRoutes);
+// Rotas de Storage e Auth (novas) with specific rate limits
+app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/storage', uploadLimiter, storageRoutes);
 app.use('/api/health', healthRoutes);
 
 // Rotas existentes

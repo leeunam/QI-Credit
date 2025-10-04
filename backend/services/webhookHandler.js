@@ -3,6 +3,8 @@
 
 const crypto = require('crypto');
 const config = require('../config/config');
+const db = require('../config/database');
+const { v4: uuidv4 } = require('uuid');
 
 class WebhookHandler {
   constructor() {
@@ -39,45 +41,80 @@ class WebhookHandler {
 
   // Process incoming webhook
   async processWebhook(eventType, payload, rawBody) {
+    const trx = await db.transaction();
+
     try {
       console.log(`Processing webhook event: ${eventType}`);
-      
+
+      // Persist webhook event to database first
+      const webhookEventData = {
+        id: uuidv4(),
+        event_type: eventType,
+        payload: JSON.stringify(payload),
+        status: 'PENDING',
+        received_at: new Date(),
+        created_at: new Date(),
+        updated_at: new Date()
+      };
+
+      const [webhookEvent] = await trx('webhook_events')
+        .insert(webhookEventData)
+        .returning('*');
+
       // Verify signature if present (header 'signature' in QITech webhooks)
       const signature = payload.signature || payload.headers?.signature;
       if (signature && rawBody) {
         const isValid = this.verifyQitechSignature(rawBody, signature);
         if (!isValid) {
           console.error('Invalid webhook signature');
+          await trx('webhook_events')
+            .where('id', webhookEvent.id)
+            .update({ status: 'FAILED', error_message: 'Invalid signature', updated_at: new Date() });
+          await trx.commit();
           return { success: false, error: 'Invalid signature' };
         }
       }
 
       // Handle credit analysis webhook (from the documentation)
+      let result;
       if (eventType.startsWith('credit_proposal')) {
-        return await this.handleCreditAnalysisWebhook(payload);
+        result = await this.handleCreditAnalysisWebhook(payload, trx);
+      } else {
+        // Handle other events
+        switch (eventType) {
+          case 'payment.received':
+            result = await this.handlePaymentReceived(payload, trx);
+            break;
+          case 'contract.signed':
+            result = await this.handleContractSigned(payload, trx);
+            break;
+          case 'contract.status_changed':
+            result = await this.handleContractStatusChanged(payload, trx);
+            break;
+          case 'pix.payment_confirmed':
+            result = await this.handlePixPaymentConfirmed(payload, trx);
+            break;
+          default:
+            result = { success: false, error: `Unsupported event type: ${eventType}` };
+        }
       }
 
-      // Handle other events
-      let result;
-      switch (eventType) {
-        case 'payment.received':
-          result = await this.handlePaymentReceived(payload);
-          break;
-        case 'contract.signed':
-          result = await this.handleContractSigned(payload);
-          break;
-        case 'contract.status_changed':
-          result = await this.handleContractStatusChanged(payload);
-          break;
-        case 'pix.payment_confirmed':
-          result = await this.handlePixPaymentConfirmed(payload);
-          break;
-        default:
-          return { success: false, error: `Unsupported event type: ${eventType}` };
-      }
-      
+      // Update webhook event status
+      await trx('webhook_events')
+        .where('id', webhookEvent.id)
+        .update({
+          status: result.success ? 'PROCESSED' : 'FAILED',
+          processed_at: new Date(),
+          error_message: result.success ? null : result.error,
+          response: JSON.stringify(result),
+          updated_at: new Date()
+        });
+
+      await trx.commit();
+
       return result;
     } catch (error) {
+      await trx.rollback();
       console.error(`Error processing webhook event ${eventType}:`, error);
       return { success: false, error: error.message };
     }

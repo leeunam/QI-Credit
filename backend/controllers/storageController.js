@@ -1,6 +1,13 @@
 const { supabase } = require('../config/supabase');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../config/database');
+const {
+  FILE_SIZE_LIMITS,
+  ALLOWED_MIME_TYPES,
+  ALLOWED_FILE_EXTENSIONS,
+  ERROR_MESSAGES,
+  SUCCESS_MESSAGES,
+} = require('../constants');
 
 exports.uploadFile = async (req, res) => {
   try {
@@ -12,6 +19,36 @@ exports.uploadFile = async (req, res) => {
     }
 
     const { bucket = 'documents', folder = '', userId } = req.body;
+    const bucketUpper = bucket.toUpperCase();
+
+    // Validação de tamanho de arquivo
+    const maxSize = FILE_SIZE_LIMITS[bucketUpper] || FILE_SIZE_LIMITS.DEFAULT;
+    if (req.file.size > maxSize) {
+      return res.status(400).json({
+        success: false,
+        error: `${ERROR_MESSAGES.FILE_TOO_LARGE}. Tamanho máximo para bucket '${bucket}': ${Math.round(maxSize / 1024 / 1024)}MB`,
+      });
+    }
+
+    // Validação de tipo MIME
+    const allowedMimeTypes = ALLOWED_MIME_TYPES[bucketUpper];
+    if (allowedMimeTypes && !allowedMimeTypes.includes(req.file.mimetype)) {
+      return res.status(400).json({
+        success: false,
+        error: `${ERROR_MESSAGES.INVALID_FILE_TYPE}. Tipos permitidos para bucket '${bucket}': ${allowedMimeTypes.join(', ')}`,
+      });
+    }
+
+    // Validação de extensão de arquivo
+    const fileExtension = req.file.originalname.toLowerCase().match(/\.[^.]*$/)?.[0];
+    const allowedExtensions = ALLOWED_FILE_EXTENSIONS[bucketUpper];
+    if (allowedExtensions && fileExtension && !allowedExtensions.includes(fileExtension)) {
+      return res.status(400).json({
+        success: false,
+        error: `${ERROR_MESSAGES.INVALID_FILE_EXTENSION}. Extensões permitidas para bucket '${bucket}': ${allowedExtensions.join(', ')}`,
+      });
+    }
+
     const fileId = uuidv4();
     const fileName = `${fileId}-${req.file.originalname}`;
     const filePath = folder ? `${folder}/${fileName}` : fileName;

@@ -5,7 +5,8 @@
  * Este script testa todas as funcionalidades: PostgreSQL, Storage e Auth
  */
 
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 const { createClient } = require('@supabase/supabase-js');
 const knex = require('knex');
 
@@ -282,7 +283,7 @@ async function runMigrations() {
         ssl: { rejectUnauthorized: false },
       },
       migrations: {
-        directory: './database/migrations',
+        directory: path.resolve(__dirname, '../database/migrations'),
         tableName: 'knex_migrations',
       },
     });

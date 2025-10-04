@@ -1,6 +1,6 @@
 const axios = require('axios');
 const config = require('../config/config');
-const { CreditAnalysis, User } = require('../../database/models');
+const { CreditAnalysis, User } = require('../../database/models/indexModel');
 const db = require('../config/database');
 
 // Determine if we're running in mock mode

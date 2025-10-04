@@ -1,4 +1,4 @@
-const { MarketplaceOffer, User, Loan } = require('../../database/models');
+const { MarketplaceOffer, User, Loan } = require('../../database/models/indexModel');
 const db = require('../config/database');
 
 class MarketplaceService {

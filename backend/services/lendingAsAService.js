@@ -1,5 +1,8 @@
 const axios = require('axios');
 const config = require('../config/config');
+const db = require('../config/database');
+const { v4: uuidv4 } = require('uuid');
+const Loan = require('../../database/models/loanModel');
 
 // Determine if we're running in mock mode
 const isMockMode = config.QITECH_MOCK_MODE === 'true';
@@ -308,15 +311,66 @@ class LendingAsAService {
       }
     };
 
+    const trx = await db.transaction();
+
     try {
+      // Call QITech API to create contract
       const result = await this.qitechAPI.createContract(contractPayload);
+
+      // Persist contract to database
+      const loanContractData = {
+        id: uuidv4(),
+        borrower_id: contractData.borrower_id || contractData.userId,
+        marketplace_offer_id: contractData.marketplace_offer_id || contractData.offerId,
+        external_contract_id: result.id || result.contract_id,
+        amount: contractPayload.amount,
+        rate: contractPayload.interest_rate,
+        term_days: (contractPayload.installments || 12) * 30, // Approximate conversion
+        status: 'PENDING',
+        contract_type: contractPayload.contract_type,
+        metadata: JSON.stringify({
+          qitech_response: result,
+          repayment_schedule: result.repayment_schedule,
+          total_amount: result.total_amount,
+          installments: contractPayload.installments
+        }),
+        created_at: new Date(),
+        updated_at: new Date()
+      };
+
+      const [dbContract] = await trx('loan_contracts')
+        .insert(loanContractData)
+        .returning('*');
+
+      // Persist repayment schedule if available
+      if (result.repayment_schedule && Array.isArray(result.repayment_schedule)) {
+        const repayments = result.repayment_schedule.map((schedule) => ({
+          id: uuidv4(),
+          loan_id: dbContract.id,
+          installment_number: schedule.installment,
+          due_date: schedule.dueDate,
+          amount: schedule.amount,
+          principal_amount: schedule.principal,
+          interest_amount: schedule.interest,
+          status: schedule.status?.toUpperCase() || 'PENDING',
+          created_at: new Date(),
+          updated_at: new Date()
+        }));
+
+        await trx('repayments').insert(repayments);
+      }
+
+      await trx.commit();
+
       return {
         success: true,
         contractId: result.id,
         status: result.status,
-        contract: result
+        contract: result,
+        dbRecord: dbContract
       };
     } catch (error) {
+      await trx.rollback();
       console.error('Error creating credit contract:', error);
       return {
         success: false,
@@ -378,14 +432,37 @@ class LendingAsAService {
       reference: paymentData.reference || `Payment for contract ${contractId}`
     };
 
+    const trx = await db.transaction();
+
     try {
+      // Call QITech API to notify payment
       const result = await this.qitechAPI.notifyPayment(contractId, paymentPayload);
+
+      // Update repayment in database if installment number provided
+      if (paymentData.installment_number) {
+        await trx('repayments')
+          .where({
+            loan_id: paymentData.loan_id,
+            installment_number: paymentData.installment_number
+          })
+          .update({
+            status: 'PAID',
+            paid_amount: paymentData.amount,
+            payment_date: paymentPayload.payment_date,
+            payment_method: paymentPayload.payment_method,
+            updated_at: new Date()
+          });
+      }
+
+      await trx.commit();
+
       return {
         success: true,
         contractId,
         paymentNotification: result
       };
     } catch (error) {
+      await trx.rollback();
       console.error('Error notifying contract payment:', error);
       return {
         success: false,

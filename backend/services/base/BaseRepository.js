@@ -5,7 +5,8 @@ class BaseRepository {
   constructor(tableName) {
     this.tableName = tableName;
     this.db = db;
-    this.isMockMode = config.mock.database;
+    // Fix: config.mock.database doesn't exist, use MOCK_MODE env var or check config structure
+    this.isMockMode = process.env.MOCK_MODE === 'true' || config.MOCK_MODE === 'true';
   }
 
   async findAll(filters = {}) {

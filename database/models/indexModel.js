@@ -1,11 +1,11 @@
-const BaseModel = require('./BaseModel');
-const User = require('./User');
-const MarketplaceOffer = require('./MarketplaceOffer');
-const Loan = require('./Loan');
-const EscrowTransaction = require('./EscrowTransaction');
-const DigitalAccount = require('./DigitalAccount');
-const CreditAnalysis = require('./CreditAnalysis');
-const KycVerification = require('./KycVerification');
+const BaseModel = require('./baseModel');
+const User = require('./userModel');
+const MarketplaceOffer = require('./mktplaceOffer');
+const Loan = require('./loanModel');
+const EscrowTransaction = require('./escrowtransactionModel');
+const DigitalAccount = require('./digitalaccountModel');
+const CreditAnalysis = require('./creditanalysisModel');
+const KycVerification = require('./kycverificationModel');
 
 module.exports = {
   BaseModel,
