@@ -1,56 +1,37 @@
 {
   "name": "qi-credit",
-  "version": "1.0.0",
-  "description": "QI Credit - P2P Lending Platform with Blockchain Integration",
-  "private": true,
-  "workspaces": [
-    "frontend",
-    "backend",
-    "blockchain"
-  ],
+  "version": "0.1.0",
+  "description": "",
+  "main": "backend/server.js",
   "scripts": {
-    "dev": "cd frontend && npm run dev",
-    "dev:frontend": "cd frontend && npm run dev",
-    "start": "npm run dev",
-    "build": "npm run build:frontend",
-    "build:frontend": "cd frontend && npm run build",
-    "preview": "cd frontend && npm run preview",
-    "lint": "npm run lint:frontend",
-    "lint:frontend": "cd frontend && npm run lint",
-    "lint:check": "cd frontend && npm run lint:check",
-    "type-check": "cd frontend && npm run type-check",
-    "test": "npm run test:frontend",
-    "test:frontend": "cd frontend && npm run test",
-    "clean": "npm run clean:frontend",
-    "clean:frontend": "cd frontend && npm run clean",
-    "install:all": "npm install && cd frontend && npm install",
-    "install:frontend": "cd frontend && npm install",
-    "setup": "npm run install:all",
-    "postinstall": "echo '✅ QI Credit - Dependencies installed successfully!'",
-    "help": "echo 'Available commands:\\n  npm start - Start development server\\n  npm run build - Build for production\\n  npm run lint - Run linting\\n  npm run setup - Install all dependencies'"
+    "start": "npm run start:backend",
+    "start:backend": "cd backend && node server.js",
+    "dev": "npm run dev:backend",
+    "dev:backend": "cd backend && nodemon server.js",
+    "test": "npm run test:backend && npm run test:blockchain",
+    "test:backend": "cd backend && jest",
+    "test:blockchain": "cd blockchain && npx hardhat test",
+    "deploy:contracts": "cd blockchain && npx hardhat run scripts/deploy.js",
+    "setup": "sh scripts/setup.sh",
+    "docs": "docsify serve docs"
   },
   "keywords": [
+    "fintech",
     "p2p",
-    "lending",
+    "credit",
     "blockchain",
-    "react",
-    "typescript",
-    "vite",
-    "tailwindcss",
-    "shadcn",
-    "radix-ui"
+    "evm",
+    "smart-contracts"
   ],
   "author": "QI Credit Team",
   "license": "MIT",
-  "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=9.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/leeunam/QI-Credit.git"
-  },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.0"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "morgan": "^1.10.1"
   }
 }
