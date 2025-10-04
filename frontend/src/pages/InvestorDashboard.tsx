@@ -7,6 +7,7 @@ import {
   type InvestorDashboardData,
 } from '@/services/investorService';
 import { toast } from 'sonner';
+import { useNavigate } from "react-router-dom";
 
 /**
  * Componente de Métrica - Card exibindo uma métrica principal
@@ -83,10 +84,14 @@ interface InvestmentCardProps {
 }
 
 function InvestmentCard({ investment }: InvestmentCardProps) {
+  const navigate = useNavigate();
   const isDelayed = investment.status === 'Atrasado';
+  const handleClick = () => {
+    navigate("/pagamentos/payment-001");
+  };  
 
   return (
-    <Card className="border border-border bg-card hover:shadow-md transition-shadow">
+    <Card onClick={handleClick} className="border border-border bg-card hover:shadow-md transition-shadow">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-heading-4 text-card-foreground">
