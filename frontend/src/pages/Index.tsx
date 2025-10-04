@@ -12,7 +12,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Header } from '../components/layout/Header';
+import  Header  from '../components/layout/Header';
 import { HeroSection } from '../components/sections/HeroSection';
 import { FeaturesSection } from '../components/sections/FeaturesSection';
 import { AuthModal } from '../components/modals/AuthModal';
@@ -93,9 +93,6 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       {/* Header e Mobile Menu */}
       <Header
-        onLoginClick={handleLoginClick}
-        onSignupClick={handleSignupClick}
-        onMobileMenuClick={() => setMobileMenuOpen(!mobileMenuOpen)}
       />
       {mobileMenuOpen && (
         <div className="md:hidden bg-card border-b px-4 py-4 space-y-4">

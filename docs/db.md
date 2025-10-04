@@ -175,6 +175,7 @@ Registra trilha completa on/off chain com dados blockchain detalhados.
 - `FAILED`: Transação falhou
 
 **Estrutura típica do `metadata`:**
+
 ```json
 {
   "gas_used": 21000,
@@ -400,6 +401,7 @@ LEFT JOIN escrow_events e ON e.loan_id = l.id
 GROUP BY l.id;
 
 -- Auditoria completa de escrow por loan
+
 SELECT 
   ee.event_type,
   ee.escrow_status,
