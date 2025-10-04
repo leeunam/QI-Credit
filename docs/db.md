@@ -67,7 +67,7 @@ erDiagram
 		string status
 		timestamp created_at
 	}
-    ESCROW_EVENTS {
+	ESCROW_EVENTS {
         uuid id PK
         uuid loan_id FK
         varchar escrow_address
@@ -152,23 +152,22 @@ Reserva (prova de fundos) pré liberação definitiva.
 
 Registra trilha completa on/off chain com dados blockchain detalhados.
 
-| Campo            | Tipo          | Regras      | Observações                            |
-| ---------------- | ------------- | ----------- | -------------------------------------- |
-| id               | UUID          | PK          | gerado app                             |
-| loan_id          | UUID          | FK NOT NULL | referência ao empréstimo               |
-| escrow_address   | VARCHAR(128)  | NOT NULL    | endereço do contrato escrow            |
-| sender_address   | VARCHAR(128)  | NULL        | origem dos fundos                      |
-| receiver_address | VARCHAR(128)  | NULL        | destino dos fundos                     |
-| event_type       | VARCHAR(32)   | NOT NULL    | DEPOSITED, RELEASED, REFUNDED, PENALTY |
-| escrow_status    | VARCHAR(32)   | NOT NULL    | estado atual consolidado               |
-| amount           | NUMERIC(18,2) | NULL        | valor da transação                     |
-| tx_hash          | TEXT          | NULL        | hash transação blockchain              |
-| event_hash       | TEXT          | NULL        | hash do evento para verificação        |
-| metadata         | JSONB         | NULL        | dados blockchain adicionais            |
-| created_at       | TIMESTAMP     | NOT NULL    | timestamp do evento                    |
+| Campo | Tipo | Regras | Observações |
+|-------|------|--------|-------------|
+| id | UUID | PK | gerado app |
+| loan_id | UUID | FK NOT NULL | referência ao empréstimo |
+| escrow_address | VARCHAR(128) | NOT NULL | endereço do contrato escrow |
+| sender_address | VARCHAR(128) | NULL | origem dos fundos |
+| receiver_address | VARCHAR(128) | NULL | destino dos fundos |
+| event_type | VARCHAR(32) | NOT NULL | DEPOSITED, RELEASED, REFUNDED, PENALTY |
+| escrow_status | VARCHAR(32) | NOT NULL | estado atual consolidado |
+| amount | NUMERIC(18,2) | NULL | valor da transação |
+| tx_hash | TEXT | NULL | hash transação blockchain |
+| event_hash | TEXT | NULL | hash do evento para verificação |
+| metadata | JSONB | NULL | dados blockchain adicionais |
+| created_at | TIMESTAMP | NOT NULL | timestamp do evento |
 
 **Estados do `escrow_status`:**
-
 - `PENDING`: Aguardando confirmação blockchain
 - `DEPOSITED`: Fundos bloqueados com sucesso
 - `RELEASED`: Fundos liberados para tomador
@@ -180,7 +179,7 @@ Registra trilha completa on/off chain com dados blockchain detalhados.
 ```json
 {
   "gas_used": 21000,
-  "gas_price": "20000000000",
+  "gas_price": "20000000000", 
   "block_number": 18450123,
   "block_timestamp": "2025-09-30T14:30:00Z",
   "confirmation_count": 12,
@@ -220,15 +219,15 @@ Permite comparar mutações (ex: atualização de status) via JSON diff.
 
 ## 4. Índices Recomendados
 
-| Tabela             | Índice                                                   | Uso                         |
-| ------------------ | -------------------------------------------------------- | --------------------------- |
-| users              | (document), (email)                                      | autenticação / lookup       |
-| marketplace_offers | (status, risk_profile)                                   | listagens marketplace       |
-| loan_contracts     | (status), (borrower_id), (lender_id), (offer_id)         | consultas dashboard         |
-| escrow_events      | (loan_id, created_at), (escrow_address), (escrow_status) | timeline eventos, auditoria |
-| repayments         | (loan_id, installment_number) UNIQUE                     | cálculo schedule            |
-| transactions       | (loan_id), (digital_account_id, created_at)              | extratos                    |
-| audit_logs         | (entity, entity_id)                                      | auditoria                   |
+| Tabela             | Índice                                                           | Uso                           |
+| ------------------ | ---------------------------------------------------------------- | ----------------------------- |
+| users              | (document), (email)                                              | autenticação / lookup         |
+| marketplace_offers | (status, risk_profile)                                           | listagens marketplace         |
+| loan_contracts     | (status), (borrower_id), (lender_id), (offer_id)                | consultas dashboard           |
+| escrow_events      | (loan_id, created_at), (escrow_address), (escrow_status)         | timeline eventos, auditoria   |
+| repayments         | (loan_id, installment_number) UNIQUE                             | cálculo schedule              |
+| transactions       | (loan_id), (digital_account_id, created_at)                      | extratos                      |
+| audit_logs         | (entity, entity_id)                                              | auditoria                     |
 
 ---
 
@@ -375,6 +374,7 @@ CREATE INDEX idx_events_metadata ON escrow_events USING GIN(metadata);
 CREATE INDEX idx_repayments_loan ON repayments(loan_id, installment_number);
 CREATE INDEX idx_tx_loan ON transactions(loan_id);
 CREATE INDEX idx_audit_entity ON audit_logs(entity, entity_id);
+
 ```
 
 ---
@@ -401,7 +401,8 @@ LEFT JOIN escrow_events e ON e.loan_id = l.id
 GROUP BY l.id;
 
 -- Auditoria completa de escrow por loan
-SELECT
+
+SELECT 
   ee.event_type,
   ee.escrow_status,
   ee.amount,
@@ -415,17 +416,17 @@ WHERE ee.loan_id = 'uuid-do-loan'
 ORDER BY ee.created_at;
 
 -- Análise de gas por tipo de evento
-SELECT
+SELECT 
   event_type,
   AVG((metadata->>'gas_used')::numeric) as avg_gas,
   COUNT(*) as total_events
-FROM escrow_events
+FROM escrow_events 
 WHERE metadata->>'gas_used' IS NOT NULL
 GROUP BY event_type;
 
 -- Eventos pendentes de confirmação blockchain
-SELECT * FROM escrow_events
-WHERE escrow_status = 'PENDING'
+SELECT * FROM escrow_events 
+WHERE escrow_status = 'PENDING' 
   AND created_at < NOW() - INTERVAL '10 minutes';
 ```
 
