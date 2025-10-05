@@ -3,13 +3,15 @@ import { MarketplaceFilters } from '@/components/MarketplaceFilters';
 import { OfferCard } from '@/components/OfferCard';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Filter, TrendingUp } from 'lucide-react';
+import { Filter, TrendingUp, ArrowLeft } from 'lucide-react';
 import {
   getCreditOffers,
   type CreditOffer,
   type MarketplaceFilters as FilterType,
 } from '@/services/marketplaceService';
 import { useToast } from '@/hooks/use-toast';
+import { Link } from 'react-router-dom';
+import { Header2 } from '@/components/layout/Header2';
 
 /**
  * Página de Marketplace P2P
@@ -85,10 +87,16 @@ export default function Marketplace() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      <Header2/>
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-6 desktop-sm:py-8">
           <div className="flex items-center gap-3 mb-2">
+            <Link to="/dashboard">
+              <Button variant="outline" size="sm">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Voltar
+              </Button>
+            </Link>
             <TrendingUp className="w-8 h-8 text-primary" />
             <h1 className="text-h1 text-card-foreground">Marketplace P2P</h1>
           </div>

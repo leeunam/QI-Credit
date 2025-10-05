@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { CustomButton } from '../../components/ui/button-variants';
 import { Input } from '../../components/ui/input';

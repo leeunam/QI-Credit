@@ -202,7 +202,7 @@ export const useDashboard = (userRole: UserRole = 'investor') => {
     // Poll every 10s for escrow updates
     const interval = setInterval(() => {
       fetchDashboard();
-    }, 10000);
+    }, 100000000);
 
     return () => clearInterval(interval);
   }, [userRole]);
