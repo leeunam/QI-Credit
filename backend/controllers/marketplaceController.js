@@ -1,4 +1,4 @@
-const { MarketplaceOffer, User } = require('../../database/models');
+const { MarketplaceOffer, User } = require('../../database/models/indexModel');
 const db = require('../config/database');
 
 const createOffer = async (req, res) => {

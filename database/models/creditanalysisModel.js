@@ -1,4 +1,4 @@
-const BaseModel = require('./BaseModel');
+const BaseModel = require('./baseModel');
 
 class CreditAnalysis extends BaseModel {
   constructor(data = {}) {

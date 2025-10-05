@@ -1,5 +1,5 @@
 const escrowService = require('../services/escrowService');
-const { EscrowTransaction, Loan } = require('../../database/models');
+const { EscrowTransaction, Loan } = require('../../database/models/indexModel');
 
 async function createEscrow(req, res) {
   try {

@@ -1,5 +1,5 @@
 const creditAnalysisService = require('../services/creditAnalysisService');
-const { User, CreditAnalysis } = require('../../database/models');
+const { User, CreditAnalysis } = require('../../database/models/indexModel');
 const bankingAsAService = require('../services/bankingAsAService');
 const lendingAsAService = require('../services/lendingAsAService');
 const blockchainService = require('../services/blockchainService');

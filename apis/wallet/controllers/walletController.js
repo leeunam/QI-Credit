@@ -1,5 +1,5 @@
 const walletService = require('../services/walletService');
-const { User, DigitalAccount } = require('../../../database/models');
+const { User, DigitalAccount } = require('../../../database/models/indexModel');
 const db = require('../../../backend/config/database'); // Adicionar import do db
 
 const getWalletDetails = async (req, res) => {

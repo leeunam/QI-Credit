@@ -496,6 +496,7 @@ class FraudKycService {
       const kycVerificationData = {
         id: uuidv4(),
         user_id: userData.id || userData.userId,
+        verification_type: 'FULL_KYC', // Required NOT NULL field
         status: overallStatus,
         document_type: userData.document_type || 'CPF',
         document_number: userData.document,

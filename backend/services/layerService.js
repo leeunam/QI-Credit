@@ -1,4 +1,4 @@
-const { User } = require('../../database/models');
+const { User } = require('../../database/models/indexModel');
 const db = require('../config/database');
 
 class UserService {

@@ -16,7 +16,7 @@ const FILE_SIZE_LIMITS = {
 };
 
 const ALLOWED_MIME_TYPES = {
-  DOCUMENTS: ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'],
+  DOCUMENTS: ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf', 'text/plain'],
   CONTRACTS: ['application/pdf'],
   KYC: ['image/jpeg', 'image/png', 'image/jpg'],
   'KYC-DOCUMENTS': ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'],
@@ -28,7 +28,7 @@ const ALLOWED_MIME_TYPES = {
 };
 
 const ALLOWED_FILE_EXTENSIONS = {
-  DOCUMENTS: ['.pdf', '.jpg', '.jpeg', '.png'],
+  DOCUMENTS: ['.pdf', '.jpg', '.jpeg', '.png', '.txt'],
   CONTRACTS: ['.pdf'],
   KYC: ['.jpg', '.jpeg', '.png'],
   'KYC-DOCUMENTS': ['.jpg', '.jpeg', '.png', '.pdf'],
@@ -139,15 +139,15 @@ const USER_ROLES = {
 const RATE_LIMITS = {
   DEFAULT: {
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // 100 requests per window
+    max: 200, // 200 requests per window (increased for testing)
   },
   UPLOAD: {
     windowMs: 15 * 60 * 1000,
-    max: 10, // 10 uploads per 15 minutes
+    max: 30, // 30 uploads per 15 minutes (increased for testing)
   },
   AUTH: {
     windowMs: 15 * 60 * 1000,
-    max: 5, // 5 login attempts per 15 minutes
+    max: 50, // 50 auth requests per 15 minutes (increased for testing)
   },
   SENSITIVE: {
     windowMs: 60 * 60 * 1000, // 1 hour

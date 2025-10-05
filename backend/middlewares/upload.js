@@ -1,34 +1,13 @@
 const multer = require('multer');
 
+// Multer configuration
+// Note: File type validation is handled in the controller, not here,
+// because req.body is not available during fileFilter execution
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB
+    fileSize: 50 * 1024 * 1024, // 50MB max (individual validations in controller)
     files: 1,
-  },
-  fileFilter: (req, file, cb) => {
-    // Tipos permitidos por bucket
-    const allowedTypes = {
-      documents: ['image/jpeg', 'image/png', 'application/pdf'],
-      contracts: ['application/pdf'],
-      kyc: ['image/jpeg', 'image/png'],
-    };
-
-    const bucket = req.body.bucket || 'documents';
-    const allowed = allowedTypes[bucket] || allowedTypes.documents;
-
-    if (allowed.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(
-        new Error(
-          `Tipo de arquivo não permitido para o bucket ${bucket}. Tipos aceitos: ${allowed.join(
-            ', '
-          )}`
-        ),
-        false
-      );
-    }
   },
 });
 
