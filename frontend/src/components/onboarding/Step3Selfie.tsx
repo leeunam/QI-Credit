@@ -92,19 +92,19 @@ export const Step3Selfie: React.FC = () => {
             type: 'image/jpeg',
           });
 
-          const success = await uploadFile(file, {
+          const result = await uploadFile(file, {
             bucket: 'kyc',
             folder: 'selfies'
           });
 
-          if (success && uploadState.uploadedFile) {
+          if (result.success && result.data) {
             const preview = URL.createObjectURL(blob);
             updateData({
               selfie: blob,
               selfiePreview: preview,
-              fileIds: { 
-                ...data.fileIds, 
-                selfie: uploadState.uploadedFile.fileId 
+              fileIds: {
+                ...data.fileIds,
+                selfie: result.data.fileId
               }
             });
 
@@ -129,7 +129,7 @@ export const Step3Selfie: React.FC = () => {
       'image/jpeg',
       0.9
     );
-  }, [data.onboardingId, uploadFile, uploadState.uploadedFile, updateData, data.fileIds, toast, stopCamera, resetUpload]);
+  }, [data.onboardingId, uploadFile, updateData, data.fileIds, toast, stopCamera, resetUpload]);
 
   const handleFileUpload = async (file: File) => {
     if (!data.onboardingId) return;
@@ -148,19 +148,19 @@ export const Step3Selfie: React.FC = () => {
           return;
         }
 
-        const success = await uploadFile(file, {
+        const result = await uploadFile(file, {
           bucket: 'kyc',
           folder: 'selfies'
         });
 
-        if (success && uploadState.uploadedFile) {
+        if (result.success && result.data) {
           const preview = URL.createObjectURL(file);
           updateData({
             selfie: file,
             selfiePreview: preview,
-            fileIds: { 
-              ...data.fileIds, 
-              selfie: uploadState.uploadedFile.fileId 
+            fileIds: {
+              ...data.fileIds,
+              selfie: result.data.fileId
             }
           });
 

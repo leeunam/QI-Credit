@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { storageService, UploadOptions, UploadResponse } from '@/services/storageService';
+import { storageService, UploadOptions, UploadResponse } from '@/services/storage';
 import { useToast } from '@/hooks/use-toast';
 
 export interface UploadState {
@@ -11,7 +11,7 @@ export interface UploadState {
 
 export interface UseFileUploadReturn {
   uploadState: UploadState;
-  uploadFile: (file: File, options?: UploadOptions) => Promise<boolean>;
+  uploadFile: (file: File, options?: UploadOptions) => Promise<{ success: boolean; data?: UploadResponse['data'] }>;
   resetUpload: () => void;
   deleteFile: (fileId: string) => Promise<boolean>;
 }
@@ -25,7 +25,7 @@ export function useFileUpload(): UseFileUploadReturn {
     uploadedFile: null
   });
 
-  const uploadFile = useCallback(async (file: File, options?: UploadOptions): Promise<boolean> => {
+  const uploadFile = useCallback(async (file: File, options?: UploadOptions): Promise<{ success: boolean; data?: UploadResponse['data'] }> => {
     try {
       setUploadState({
         isUploading: true,
@@ -46,7 +46,9 @@ export function useFileUpload(): UseFileUploadReturn {
 
       clearInterval(progressInterval);
 
-      if (result.success && result.data) {
+      console.log('Resultado do upload no hook:', result);
+
+      if (result.success === true && result.data) {
         setUploadState({
           isUploading: false,
           progress: 100,
@@ -59,22 +61,23 @@ export function useFileUpload(): UseFileUploadReturn {
           description: `${file.name} foi enviado com sucesso.`,
         });
 
-        return true;
+        return { success: true, data: result.data };
       } else {
+        const errorMessage = result.error || 'Erro desconhecido no upload';
         setUploadState({
           isUploading: false,
           progress: 0,
-          error: result.error || 'Erro desconhecido',
+          error: errorMessage,
           uploadedFile: null
         });
 
         toast({
           variant: 'destructive',
           title: 'Erro no upload',
-          description: result.error || 'Falha ao enviar arquivo',
+          description: errorMessage,
         });
 
-        return false;
+        return { success: false };
       }
 
     } catch (error) {
@@ -91,7 +94,7 @@ export function useFileUpload(): UseFileUploadReturn {
         description: 'Ocorreu um erro inesperado durante o upload',
       });
 
-      return false;
+      return { success: false };
     }
   }, [toast]);
 

@@ -81,17 +81,17 @@ export const DocumentUpload: React.FC = () => {
   const handleFileSelect = async (docId: string, file: File) => {
     setUploadingDoc(docId);
 
-    const success = await uploadFile(file, {
+    const result = await uploadFile(file, {
       bucket: 'documents',
       folder: 'credit-application'
     });
 
-    if (success && uploadState.uploadedFile) {
+    if (result.success && result.data) {
       const newDocuments = {
         ...documents,
         [docId]: {
-          fileId: uploadState.uploadedFile.fileId,
-          fileName: uploadState.uploadedFile.fileName,
+          fileId: result.data.fileId,
+          fileName: result.data.fileName,
           isUploaded: true,
           preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined
         }
@@ -99,19 +99,14 @@ export const DocumentUpload: React.FC = () => {
       setDocuments(newDocuments);
 
       updateApplication({
-        documents: { 
-          ...currentApplication?.documents, 
-          [docId]: file 
+        documents: {
+          ...currentApplication?.documents,
+          [docId]: file
         },
-        fileIds: { 
-          ...currentApplication?.fileIds, 
-          [docId]: uploadState.uploadedFile.fileId 
+        fileIds: {
+          ...currentApplication?.fileIds,
+          [docId]: result.data.fileId
         }
-      });
-
-      toast({
-        title: 'Documento enviado!',
-        description: `${file.name} foi enviado com sucesso.`,
       });
     }
 
@@ -224,6 +219,7 @@ export const DocumentUpload: React.FC = () => {
                       <span>Máx: {doc.maxSize}</span>
                     </div>
 
+                    {docState.isUploaded && (
                       <p className="text-body-4 text-success mt-2 font-medium">
                         📎 {docState.fileName}
                       </p>

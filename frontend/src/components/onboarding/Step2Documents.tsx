@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useFileUpload } from '@/hooks/useFileUpload';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Loader2, Check, X, Trash2 } from 'lucide-react';
+import { Upload, Loader2, Check, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type DocType = 'idFront' | 'idBack' | 'proof';
@@ -32,13 +32,36 @@ export const Step2Documents: React.FC = () => {
   const { data, updateData, nextStep, prevStep } = useOnboarding();
   const { toast } = useToast();
   const [uploadingDoc, setUploadingDoc] = useState<DocType | null>(null);
+  
+  // Estado local para documentos
   const [documents, setDocuments] = useState<DocumentUploadState>({
-    idFront: { isUploaded: !!data.documents.idFront },
-    idBack: { isUploaded: !!data.documents.idBack },
-    proof: { isUploaded: !!data.documents.proof },
+    idFront: { isUploaded: false },
+    idBack: { isUploaded: false },
+    proof: { isUploaded: false },
   });
 
   const { uploadState, uploadFile, resetUpload, deleteFile } = useFileUpload();
+
+  // Atualizar estado local com base nos dados do contexto
+  useEffect(() => {
+    setDocuments({
+      idFront: { 
+        isUploaded: !!data.fileIds?.idFront,
+        fileId: data.fileIds?.idFront,
+        fileName: data.documentPreviews?.idFront ? data.documentPreviews.idFront.split('/').pop() : undefined
+      },
+      idBack: { 
+        isUploaded: !!data.fileIds?.idBack,
+        fileId: data.fileIds?.idBack,
+        fileName: data.documentPreviews?.idBack ? data.documentPreviews.idBack.split('/').pop() : undefined
+      },
+      proof: { 
+        isUploaded: !!data.fileIds?.proof,
+        fileId: data.fileIds?.proof,
+        fileName: data.documentPreviews?.proof ? data.documentPreviews.proof.split('/').pop() : undefined
+      },
+    });
+  }, [data.fileIds, data.documentPreviews]);
 
   const handleFileSelect = async (type: DocType, file: File) => {
     if (!data.onboardingId) {
@@ -52,32 +75,22 @@ export const Step2Documents: React.FC = () => {
 
     setUploadingDoc(type);
 
-    const success = await uploadFile(file, {
+    const result = await uploadFile(file, {
       bucket: 'kyc',
       folder: 'kyc-documents',
     });
 
-    if (success && uploadState.uploadedFile) {
-      const newDocuments = {
-        ...documents,
-        [type]: {
-          fileId: uploadState.uploadedFile.fileId,
-          fileName: uploadState.uploadedFile.fileName,
-          isUploaded: true,
-          preview: URL.createObjectURL(file),
-        },
-      };
-      setDocuments(newDocuments);
-
+    if (result.success && result.data) {
+      // Atualizar contexto de onboarding
       updateData({
-        documents: { ...data.documents, [type]: file },
-        documentPreviews: {
-          ...data.documentPreviews,
-          [type]: newDocuments[type].preview,
-        },
+        ...data,
         fileIds: {
           ...data.fileIds,
-          [type]: uploadState.uploadedFile.fileId,
+          [type]: result.data.fileId,
+        },
+        documentPreviews: {
+          ...data.documentPreviews,
+          [type]: URL.createObjectURL(file),
         },
       });
     }
@@ -87,36 +100,41 @@ export const Step2Documents: React.FC = () => {
   };
 
   const handleDeleteDocument = async (type: DocType) => {
-    const doc = documents[type];
-    if (doc.fileId) {
-      const success = await deleteFile(doc.fileId);
+    const fileId = data.fileIds?.[type];
+    if (fileId) {
+      const success = await deleteFile(fileId);
       if (success) {
-        setDocuments({
-          ...documents,
-          [type]: { isUploaded: false },
-        });
-
-        const newDocuments = { ...data.documents };
-        delete newDocuments[type];
-
+        // Atualizar contexto de onboarding
+        const newFileIds = { ...data.fileIds };
+        delete newFileIds[type];
+        
         const newPreviews = { ...data.documentPreviews };
         delete newPreviews[type];
 
-        const newFileIds = { ...data.fileIds };
-        delete newFileIds[type];
-
         updateData({
-          documents: newDocuments,
-          documentPreviews: newPreviews,
+          ...data,
           fileIds: newFileIds,
+          documentPreviews: newPreviews,
+        });
+
+        toast({
+          title: 'Documento removido',
+          description: 'Documento excluído com sucesso.',
+        });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Erro',
+          description: 'Falha ao excluir documento',
         });
       }
     }
   };
 
   const handleNext = () => {
+    // Verificar se todos os documentos obrigatórios foram enviados
     const allUploaded = documentTypes.every(
-      (doc) => documents[doc.type].isUploaded
+      (doc) => !!data.fileIds?.[doc.type]
     );
 
     if (!allUploaded) {
@@ -237,10 +255,10 @@ export const Step2Documents: React.FC = () => {
                 </div>
               )}
 
-              {doc.isUploaded && doc.preview && (
+              {doc.isUploaded && data.documentPreviews?.[type] && (
                 <div className="mt-4">
                   <img
-                    src={doc.preview}
+                    src={data.documentPreviews[type]}
                     alt={`Preview ${label}`}
                     className="max-w-32 h-20 object-cover rounded border"
                   />

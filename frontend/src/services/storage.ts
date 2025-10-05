@@ -1,4 +1,4 @@
-import { apiClient } from './apiClient';
+import { apiClient } from './apiClients';
 
 export interface UploadOptions {
   bucket?: 'documents' | 'contracts' | 'kyc';
@@ -55,22 +55,36 @@ class StorageService {
         formData.append('isPublic', 'true');
       }
 
-      const response = await apiClient.post('/storage/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      // Enviar a requisição sem definir explicitamente Content-Type
+      // O axios irá definir automaticamente com o boundary correto quando for FormData
+      const response = await apiClient.post('/storage/upload', formData);
 
-      return {
-        success: true,
-        data: response.data.data
-      };
+      // Verificar se a resposta tem a estrutura esperada
+      if (response.data && typeof response.data === 'object' && response.data.success !== undefined) {
+        return {
+          success: response.data.success,
+          data: response.data.data,
+          error: response.data.error
+        };
+      } else {
+        console.error('Estrutura de resposta inesperada:', response.data);
+        return {
+          success: false,
+          error: 'Estrutura de resposta inesperada do servidor'
+        };
+      }
 
     } catch (error: any) {
-      console.error('Upload error:', error);
+      console.error('Upload error details:', {
+        message: error.message,
+        code: error.code,
+        response: error.response,
+        request: error.request
+      });
+      
       return {
         success: false,
-        error: error.response?.data?.error || 'Erro no upload do arquivo'
+        error: error.response?.data?.error || error.message || 'Erro no upload do arquivo'
       };
     }
   }
@@ -144,7 +158,7 @@ class StorageService {
         allowedExtensions: ['.pdf']
       },
       kyc: {
-        maxSize: 5 * 1024 * 1024, 
+        maxSize: 5 * 1024 * 1024,
         allowedTypes: ['image/jpeg', 'image/png'],
         allowedExtensions: ['.jpg', '.jpeg', '.png']
       }

@@ -19,7 +19,24 @@ exports.uploadFile = async (req, res) => {
     }
 
     const { bucket = 'documents', folder = '', userId } = req.body;
-    const bucketUpper = bucket.toUpperCase();
+    
+    // Mapeamento de buckets abreviados para nomes reais no Supabase
+    const bucketMap = {
+      'documents': 'documents',
+      'kyc': 'kyc-documents',
+      'kyc-documents': 'kyc-documents',
+      'user-profiles': 'user-profiles',
+      'contracts': 'contracts',
+      'loan-documents': 'loan-documents',
+      'credit-analysis': 'credit-analysis',
+      'audit-files': 'audit-files',
+      'temporary-files': 'temporary-files'
+    };
+
+    // Use o nome real do bucket ou o mesmo se não estiver no mapeamento
+    const realBucketName = bucketMap[bucket] || bucket;
+    // Para validação, usar o bucket normalizado
+    const bucketUpper = realBucketName.toUpperCase().replace('-', '_');
 
     // Validação de tamanho de arquivo
     const maxSize = FILE_SIZE_LIMITS[bucketUpper] || FILE_SIZE_LIMITS.DEFAULT;
@@ -52,6 +69,15 @@ exports.uploadFile = async (req, res) => {
     const fileId = uuidv4();
     const fileName = `${fileId}-${req.file.originalname}`;
     const filePath = folder ? `${folder}/${fileName}` : fileName;
+
+    console.log('📤 Upload info:', {
+      fileId,
+      fileName,
+      filePath,
+      bucket: realBucketName,
+      size: req.file.size,
+      mimetype: req.file.mimetype
+    });
 
     // Validar userId se fornecido
     if (userId) {
@@ -110,8 +136,9 @@ exports.uploadFile = async (req, res) => {
     }
 
     // Upload real para Supabase
+    console.log('🚀 Uploading to Supabase bucket:', realBucketName);
     const { data, error } = await supabase.storage
-      .from(bucket)
+      .from(realBucketName)
       .upload(filePath, req.file.buffer, {
         contentType: req.file.mimetype,
         metadata: {
@@ -123,18 +150,25 @@ exports.uploadFile = async (req, res) => {
 
     if (error) {
       console.error('❌ Supabase upload error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        statusCode: error.statusCode,
+        error: error
+      });
       return res.status(500).json({
         success: false,
         error: error.message,
       });
     }
 
+    console.log('✅ Upload successful to Supabase:', data);
+
     // Salvar referência no banco
     try {
       const fileRecord = {
         id: fileId,
         user_id: userId || null,
-        bucket,
+        bucket: realBucketName, // Usar o nome real do bucket
         file_path: data.path,
         file_name: fileName,
         original_name: req.file.originalname,
@@ -161,7 +195,7 @@ exports.uploadFile = async (req, res) => {
         fileName: req.file.originalname,
         size: req.file.size,
         mimetype: req.file.mimetype,
-        bucket,
+        bucket, // Manter o bucket original para compatibilidade com o frontend
         uploadedAt: new Date(),
       },
     });
