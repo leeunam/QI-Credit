@@ -1,36 +1,46 @@
 // Onboarding Service
 // This service handles the business logic for user onboarding
 
-// Mock data store for demonstration
-let users = {};
-let verificationStatus = {};
+const db = require('../../../backend/config/database');
+const bcrypt = require('bcrypt');
 
 const registerUser = async (userData) => {
   // In a real application, this would hash the password, validate email, etc.
   // and store the user in a database
   
-  const userId = `user_${Date.now()}`; // Generate a unique ID
+  // Check if user already exists
+  const existingUser = await db('users').where('email', userData.email).first();
+  if (existingUser) {
+    throw new Error('User with this email already exists');
+  }
   
-  const user = {
-    id: userId,
+  // Hash password
+  const saltRounds = 10;
+  const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
+  
+  // Create user in database
+  const [userId] = await db('users').insert({
+    name: `${userData.firstName} ${userData.lastName}`,
+    email: userData.email,
+    phone: userData.phoneNumber,
+    password: hashedPassword,
+    created_at: new Date(),
+    updated_at: new Date(),
+    kyc_status: 'PENDING'  // Initial status
+  });
+  
+  // Get the created user
+  const user = await db('users').where('id', userId).first();
+  
+  return {
+    id: user.id,
     firstName: userData.firstName,
     lastName: userData.lastName,
-    email: userData.email,
-    phoneNumber: userData.phoneNumber,
-    createdAt: new Date(),
+    email: user.email,
+    phoneNumber: user.phone,
+    createdAt: user.created_at,
     onboardingStatus: 'REGISTERED' // Initial status
   };
-  
-  users[userId] = user;
-  
-  // Initialize verification status
-  verificationStatus[userId] = {
-    identityVerified: false,
-    documentsSubmitted: false,
-    onboardingComplete: false
-  };
-  
-  return user;
 };
 
 const verifyIdentity = async (verificationData) => {
@@ -40,24 +50,35 @@ const verifyIdentity = async (verificationData) => {
   const { userId, documentType, documentNumber } = verificationData;
   
   // Check if user exists
-  if (!users[userId]) {
+  const user = await db('users').where('id', userId).first();
+  if (!user) {
     throw new Error('User not found');
   }
   
   // Mock verification logic
   const isValid = validateDocument(documentNumber); // Simplified validation
   
-  // Update verification status
-  verificationStatus[userId] = {
-    ...verificationStatus[userId],
-    identityVerified: isValid,
-    documentsSubmitted: true,
-    documentType,
-    documentNumber: isValid ? documentNumber : null
-  };
+  // In a real system, we'd also update kyc_verifications table
+  const [verificationId] = await db('kyc_verifications').insert({
+    user_id: userId,
+    document_type: documentType,
+    document_number: documentNumber,
+    verification_status: isValid ? 'APPROVED' : 'REJECTED',
+    created_at: new Date(),
+    updated_at: new Date()
+  });
+  
+  // Update user's KYC status based on verification result
+  if (isValid) {
+    await db('users').where('id', userId).update({
+      kyc_status: 'IN_REVIEW',  // or 'APPROVED' if automatic
+      updated_at: new Date()
+    });
+  }
   
   return {
     userId,
+    verificationId,
     status: isValid ? 'VERIFIED' : 'FAILED',
     message: isValid ? 'Identity verified successfully' : 'Identity verification failed'
   };
@@ -68,19 +89,16 @@ const completeOnboarding = async (userId) => {
   // complete the onboarding process
   
   // Check if user exists
-  if (!users[userId]) {
+  const user = await db('users').where('id', userId).first();
+  if (!user) {
     throw new Error('User not found');
   }
   
-  // Check if user is already fully verified
-  const verification = verificationStatus[userId];
-  if (!verification || !verification.identityVerified) {
-    throw new Error('User identity not verified');
-  }
-  
-  // Update user status
-  users[userId].onboardingStatus = 'COMPLETED';
-  verificationStatus[userId].onboardingComplete = true;
+  // Update user status to completed
+  await db('users').where('id', userId).update({
+    kyc_status: 'APPROVED',
+    updated_at: new Date()
+  });
   
   return {
     userId,
@@ -92,27 +110,30 @@ const completeOnboarding = async (userId) => {
 
 const getOnboardingStatus = async (userId) => {
   // Check if user exists
-  if (!users[userId]) {
+  const user = await db('users').where('id', userId).first();
+  if (!user) {
     throw new Error('User not found');
   }
   
-  const user = users[userId];
-  const verification = verificationStatus[userId] || {
-    identityVerified: false,
-    documentsSubmitted: false,
-    onboardingComplete: false
-  };
+  // Get KYC verification status
+  const kycVerifications = await db('kyc_verifications')
+    .where('user_id', userId)
+    .select('*');
+  
+  const identityVerified = user.kyc_status === 'APPROVED';
+  const documentsSubmitted = kycVerifications.length > 0;
+  const onboardingComplete = user.kyc_status === 'APPROVED';
   
   return {
     userId,
-    completed: verification.onboardingComplete,
-    status: user.onboardingStatus,
-    identityVerified: verification.identityVerified,
-    documentsSubmitted: verification.documentsSubmitted,
+    completed: onboardingComplete,
+    status: user.kyc_status,
+    identityVerified,
+    documentsSubmitted,
     steps: [
       { step: 'registration', completed: true },
-      { step: 'identity_verification', completed: verification.identityVerified },
-      { step: 'onboarding_completion', completed: verification.onboardingComplete }
+      { step: 'identity_verification', completed: identityVerified },
+      { step: 'onboarding_completion', completed: onboardingComplete }
     ]
   };
 };

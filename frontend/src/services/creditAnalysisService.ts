@@ -97,7 +97,7 @@ export const creditAnalysisService = {
 
       return {
         success: true,
-        data: response.data,
+        data: response.data.data || response.data,
         message: 'Análise de crédito enviada com sucesso',
       };
     } catch (error: any) {
@@ -125,7 +125,7 @@ export const creditAnalysisService = {
 
       return {
         success: true,
-        data: response.data,
+        data: response.data.data || response.data,
         message: 'Análise de crédito empresarial enviada com sucesso',
       };
     } catch (error: any) {
@@ -157,7 +157,7 @@ export const creditAnalysisService = {
 
       return {
         success: true,
-        data: response.data,
+        data: response.data.data || response.data,
       };
     } catch (error: any) {
       console.error('Get credit score error:', error);

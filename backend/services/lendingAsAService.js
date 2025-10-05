@@ -5,12 +5,12 @@ const { v4: uuidv4 } = require('uuid');
 const Loan = require('../../database/models/loanModel');
 
 // Determine if we're running in mock mode
-const isMockMode = config.QITECH_MOCK_MODE === 'true';
+const isMockMode = config.qitech.mockMode;
 
 class QitechLaaSAPI {
   constructor(baseURL, apiKey) {
-    this.apiKey = apiKey || config.QITECH_API_KEY;
-    this.baseURL = baseURL || config.QITECH_LAAS_URL;
+    this.apiKey = apiKey || config.qitech.apiKey;
+    this.baseURL = baseURL || config.qitech.laasUrl;
     
     // Only initialize axios client if not in mock mode
     if (!isMockMode) {
@@ -288,8 +288,8 @@ class QitechLaaSAPI {
 class LendingAsAService {
   constructor() {
     this.qitechAPI = new QitechLaaSAPI(
-      config.QITECH_LAAS_URL,
-      config.QITECH_API_KEY
+      config.qitech.laasUrl,
+      config.qitech.apiKey
     );
   }
 
@@ -320,17 +320,19 @@ class LendingAsAService {
       // Persist contract to database
       const loanContractData = {
         id: uuidv4(),
+        offer_id: contractData.marketplace_offer_id || contractData.offerId,
         borrower_id: contractData.borrower_id || contractData.userId,
-        marketplace_offer_id: contractData.marketplace_offer_id || contractData.offerId,
-        external_contract_id: result.id || result.contract_id,
-        amount: contractPayload.amount,
-        rate: contractPayload.interest_rate,
-        term_days: (contractPayload.installments || 12) * 30, // Approximate conversion
+        lender_id: contractData.lender_id || null, // Pode ser adicionado mais tarde
+        principal: contractPayload.amount, // Corrigido de 'amount' para 'principal'
+        interest_rate: contractPayload.interest_rate,
+        installments: contractPayload.installments || 12,
         status: 'PENDING',
         contract_type: contractPayload.contract_type,
+        repayment_schedule: JSON.stringify(result.repayment_schedule),
+        blockchain_contract_address: null, // Será preenchido quando o contrato for implantado no blockchain
+        signed_at: null, // Será preenchido quando o contrato for assinado
         metadata: JSON.stringify({
           qitech_response: result,
-          repayment_schedule: result.repayment_schedule,
           total_amount: result.total_amount,
           installments: contractPayload.installments
         }),

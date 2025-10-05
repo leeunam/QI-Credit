@@ -84,10 +84,12 @@ exports.uploadFile = async (req, res) => {
       try {
         const userExists = await db('users').where('id', userId).first();
         if (!userExists) {
-          return res.status(404).json({
-            success: false,
-            error: 'Usuário não encontrado',
-          });
+          console.warn('⚠️  Usuário não encontrado:', userId);
+          // Não bloquear o upload se o usuário não for encontrado, apenas logar o aviso
+          // return res.status(404).json({
+          //   success: false,
+          //   error: 'Usuário não encontrado',
+          // });
         }
       } catch (dbError) {
         console.warn('⚠️  Não foi possível validar usuário:', dbError.message);
@@ -125,7 +127,7 @@ exports.uploadFile = async (req, res) => {
       return res.json({
         success: true,
         data: {
-          fileId,
+          fileId: fileId,
           path: filePath,
           fileName: req.file.originalname,
           size: req.file.size,

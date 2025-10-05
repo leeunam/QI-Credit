@@ -5,7 +5,7 @@ const db = require('../config/database');
 
 // registros e eventos de custódia para a demonstração do hackathon estão mocados para simular no hack
 
-const isMockMode = config.BLOCKCHAIN_MOCK_MODE === 'true';
+const isMockMode = config.blockchain.mockMode;
 
 class EscrowService {
   constructor() {

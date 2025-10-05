@@ -14,8 +14,7 @@ exports.seed = async function(knex) {
         term_days: 360,
         risk_profile: 'LOW',
         status: 'OPEN',
-        created_at: knex.fn.now(),
-        updated_at: knex.fn.now()
+        created_at: knex.fn.now()
       },
       {
         id: uuidv4(),
@@ -25,8 +24,7 @@ exports.seed = async function(knex) {
         term_days: 720,
         risk_profile: 'MEDIUM',
         status: 'OPEN',
-        created_at: knex.fn.now(),
-        updated_at: knex.fn.now()
+        created_at: knex.fn.now()
       },
       {
         id: uuidv4(),
@@ -36,8 +34,7 @@ exports.seed = async function(knex) {
         term_days: 180,
         risk_profile: 'HIGH',
         status: 'OPEN',
-        created_at: knex.fn.now(),
-        updated_at: knex.fn.now()
+        created_at: knex.fn.now()
       }
     ]);
   }
