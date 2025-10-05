@@ -2,7 +2,7 @@ import * as React from "react";
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { CustomButton } from '@/components/ui/button-variants';
-import { Menu, User, LogOut, Wallet, CreditCard} from 'lucide-react';
+import { Menu, User, LogOut, Wallet, CreditCard } from 'lucide-react';
 
 interface HeaderProps {
   onLoginClick: () => void;
@@ -10,10 +10,10 @@ interface HeaderProps {
   onMobileMenuClick: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ 
-  onLoginClick, 
-  onSignupClick, 
-  onMobileMenuClick 
+export const Header: React.FC<HeaderProps> = ({
+  onLoginClick,
+  onSignupClick,
+  onMobileMenuClick
 }) => {
   const { user, logout } = useAuth();
 
@@ -22,15 +22,17 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center">
-            <div className="text-h4 font-bold text-primary">
-              Plataforma
-            </div>
+          <div className="flex items-center cursor-pointer group">
+            <img
+              src="public/images/QI Credit.png"
+              alt="Logo QI Credit"
+              className="h-40 w-auto" // ajuste as classes conforme o tamanho da logo
+            />
           </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Link to="/" className="text-body-3 text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/dashboard" className="text-body-3 text-muted-foreground hover:text-foreground transition-colors">
               Início
             </Link>
             {user && (

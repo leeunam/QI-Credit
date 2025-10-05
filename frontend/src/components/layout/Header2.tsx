@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 const PAGES = [
-    { label: 'Início', to: '/', icon: '🏠' },
+    { label: 'Início', to: '/menu', icon: '🏠' },
     { label: 'Dashboard', to: '/dashboard', icon: '📊' },
     { label: 'Carteira', to: '/wallet', icon: '💰' },
     { label: 'KYC', to: '/onboarding', icon: '🛂' },
@@ -21,7 +21,7 @@ const PAGES = [
     { label: 'Dashboard do Investidor', to: '/investor-dashboard', icon: '📊' },
     { label: 'Documento Digital', to: '/indexContract', icon: '📄' },
     { label: 'Smart Contract', to: '/smart-contract/:id', icon: '🤖' },
-    { label: 'Pagamentos', to: '/pagamentos/payment-001', icon: '💳' }
+    { label: 'Pagamentos', to: '/pagamentos/:id', icon: '💳' }
 
 ];
 
@@ -81,14 +81,14 @@ export const Header2: React.FC<Header2Props> = ({
                     <div className="flex h-16 items-center justify-between">
 
                         {/* Logo com gradiente */}
-                        <div
-                            className="flex items-center cursor-pointer group"
-                            onClick={() => navigate('/')}
-                        >
-                            <div className="text-2xl font-bold text-primary">
-                                QI Credit
-                            </div>
+                        <div className="flex items-center cursor-pointer group" onClick={() => navigate('/menu')}>
+                            <img
+                                src="public/images/QI Credit.png"
+                                alt="Logo QI Credit"
+                                className="h-40 w-auto" // ajuste as classes conforme o tamanho da logo
+                            />
                         </div>
+
 
                         {/* Saldo com ícone */}
                         <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-background">
@@ -139,13 +139,14 @@ export const Header2: React.FC<Header2Props> = ({
                                     className="w-56 bg-popover/95 backdrop-blur-lg border-border/50 shadow-elevated"
                                 >
                                     <DropdownMenuItem
-                                        onClick={onProfileClick}
+                                        onClick={() => navigate('/profile')}
                                         className="cursor-pointer transition-colors duration-200"
                                     >
                                         <User className="mr-2 h-4 w-4 text-primary" />
                                         <span>Perfil</span>
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem className="cursor-pointer transition-colors duration-200">
+                                    <DropdownMenuItem
+                                        className="cursor-pointer transition-colors duration-200">
                                         <Settings className="mr-2 h-4 w-4 text-primary" />
                                         <span>Configurações</span>
                                     </DropdownMenuItem>

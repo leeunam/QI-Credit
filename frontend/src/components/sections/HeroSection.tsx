@@ -1,4 +1,3 @@
-import React from 'react';
 import { CustomButton } from '../../components/ui/button-variants';
 import { ArrowRight, Play, Shield, Zap, Globe } from 'lucide-react';
 
