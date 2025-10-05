@@ -20,7 +20,10 @@ class AuthController {
         });
       }
 
-      const { email, password, full_name, phone, role } = req.body;
+      const { email, password, full_name, phone, role, document } = req.body;
+      
+      // Log para debugging
+      console.log('📥 Payload recebido no registro:', req.body);
 
       // Validações básicas
       if (!email || !password) {
@@ -44,16 +47,39 @@ class AuthController {
         full_name,
         phone,
         role: role || 'user',
+        document: document || 'temp-doc' // Adicionar document se fornecido
       });
 
       if (!result.success) {
         return res.status(400).json(result);
       }
 
+      // Fazer login automático após registro bem-sucedido para obter tokens
+      const loginResult = await authService.loginUser(email, password);
+
+      if (!loginResult.success) {
+        // Registro foi bem-sucedido, mas login falhou
+        return res.status(201).json({
+          success: true,
+          message: 'Usuário registrado com sucesso. Por favor, faça login.',
+          data: {
+            user: result.user,
+            tokens: null
+          },
+        });
+      }
+
       res.status(201).json({
         success: true,
         message: 'Usuário registrado com sucesso',
-        user: result.user,
+        data: {
+          user: loginResult.user,
+          tokens: {
+            accessToken: loginResult.tokens.access_token,
+            refreshToken: loginResult.tokens.refresh_token,
+            expiresAt: loginResult.tokens.expires_at,
+          },
+        },
       });
     } catch (error) {
       console.error('❌ Erro no registro:', error.message);
@@ -89,8 +115,14 @@ class AuthController {
       res.json({
         success: true,
         message: 'Login realizado com sucesso',
-        user: result.user,
-        tokens: result.tokens,
+        data: {
+          user: result.user,
+          tokens: {
+            accessToken: result.tokens.access_token,
+            refreshToken: result.tokens.refresh_token,
+            expiresAt: result.tokens.expires_at,
+          },
+        },
       });
     } catch (error) {
       console.error('❌ Erro no login:', error.message);
@@ -159,7 +191,7 @@ class AuthController {
 
       res.json({
         success: true,
-        user: result.user,
+        data: result.user,
       });
     } catch (error) {
       console.error('❌ Erro ao obter perfil:', error.message);
@@ -207,6 +239,7 @@ class AuthController {
       res.json({
         success: true,
         message: 'Perfil atualizado com sucesso',
+        data: result.user,
       });
     } catch (error) {
       console.error('❌ Erro ao atualizar perfil:', error.message);

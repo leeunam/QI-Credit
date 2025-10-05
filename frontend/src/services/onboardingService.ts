@@ -1,37 +1,254 @@
 /**
- * Mock Onboarding Service
+ * Serviço de Onboarding e KYC
  *
- * This service simulates backend API calls for the KYC onboarding flow.
- * When integrating with real APIs, replace the mock implementations with actual HTTP requests.
+ * Integração real com backend /api/onboarding
+ * Substitui os mocks anteriores por chamadas HTTP reais
  *
- * Expected real API endpoints:
- * - POST /api/onboarding/basic-data - Submit basic user information
- * - POST /api/onboarding/{id}/documents - Upload document files
- * - POST /api/onboarding/{id}/selfie - Submit selfie/biometric image
- * - POST /api/onboarding/{id}/finalize - Complete onboarding submission
- * - GET /api/onboarding/{id}/kyc-status - Check KYC verification status
+ * Rotas backend:
+ * - POST /api/onboarding/verify - Verificação de identidade
+ * - POST /api/onboarding/complete - Finalizar onboarding
+ * - GET /api/onboarding/status/:userId - Status do onboarding
+ *
+ * NOTA: Registro de usuário usa /api/auth/register (não /api/onboarding/register)
  */
 
-// Simulate network latency
-const simulateDelay = (ms: number = 1000) =>
-  new Promise((resolve) => setTimeout(resolve, ms));
+import { apiClient } from './apiClients';
+import type {
+  ApiResponse,
+  KYCVerificationData,
+  KYCVerificationResult,
+  OnboardingStatusData,
+} from '@/types';
 
-// Toggle this to simulate API errors for testing
-const SIMULATE_ERRORS = false;
+// ============================================================================
+// INTERFACES ESPECÍFICAS DO ONBOARDING
+// ============================================================================
 
-export interface ApiResponse<T = unknown> {
-  status: 'ok' | 'error';
-  data?: T;
-  message?: string;
+/**
+ * Dados para verificação de identidade
+ */
+export interface VerifyIdentityData {
+  userId: string;
+  documentType: 'cpf' | 'cnpj' | 'rg' | 'cnh';
+  documentNumber: string;
+  documentImage: string | File; // base64 ou File
+  faceImage?: string | File;
+  phoneNumber?: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  birthDate?: string; // YYYY-MM-DD
 }
 
 /**
- * Submit basic user data (Step 1)
- *
- * Real API Contract:
- * POST /api/onboarding/basic-data
- * Body: { fullName: string, document: string, email: string, password: string }
- * Response: { status: 'ok', data: { onboardingId: string, userId: string } }
+ * Resposta da verificação de identidade
+ */
+export interface VerifyIdentityResponse {
+  message: string;
+  userId: string;
+  verificationStatus: string;
+  kycResult: KYCVerificationResult;
+  overallStatus: string;
+}
+
+/**
+ * Dados para completar onboarding
+ */
+export interface CompleteOnboardingData {
+  userId: string;
+}
+
+/**
+ * Resposta do status de onboarding
+ */
+export interface OnboardingStatusResponse {
+  userId: string;
+  status: {
+    isComplete: boolean;
+    steps: {
+      registration: boolean;
+      verification: boolean;
+      completed: boolean;
+    };
+    currentStep: string;
+    lastUpdated: string;
+  };
+}
+
+// ============================================================================
+// SERVIÇO DE ONBOARDING
+// ============================================================================
+
+export const onboardingService = {
+  /**
+   * Verificar identidade do usuário (KYC)
+   * POST /api/onboarding/verify
+   *
+   * Este endpoint realiza:
+   * - Verificação de documento
+   * - Verificação facial (se faceImage fornecida)
+   * - Score antifraude
+   * - Validação KYC completa
+   */
+  async verifyIdentity(data: VerifyIdentityData): Promise<ApiResponse<VerifyIdentityResponse>> {
+    try {
+      // Preparar dados para envio
+      const payload = {
+        userId: data.userId,
+        documentType: data.documentType,
+        documentNumber: data.documentNumber,
+        documentImage: data.documentImage,
+        faceImage: data.faceImage,
+        phoneNumber: data.phoneNumber,
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        birthDate: data.birthDate,
+      };
+
+      const response = await apiClient.post('/onboarding/verify', payload);
+
+      return {
+        success: true,
+        data: response.data,
+      };
+    } catch (error: any) {
+      console.error('Verify identity error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Erro ao verificar identidade',
+        code: error.response?.data?.code || 'VERIFY_IDENTITY_ERROR',
+      };
+    }
+  },
+
+  /**
+   * Completar processo de onboarding
+   * POST /api/onboarding/complete
+   */
+  async complete(userId: string): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.post('/onboarding/complete', { userId });
+
+      return {
+        success: true,
+        data: response.data,
+        message: 'Onboarding completado com sucesso',
+      };
+    } catch (error: any) {
+      console.error('Complete onboarding error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Erro ao completar onboarding',
+        code: error.response?.data?.code || 'COMPLETE_ONBOARDING_ERROR',
+      };
+    }
+  },
+
+  /**
+   * Obter status do onboarding
+   * GET /api/onboarding/status/:userId
+   */
+  async getStatus(userId: string): Promise<ApiResponse<OnboardingStatusResponse>> {
+    try {
+      const response = await apiClient.get(`/onboarding/status/${userId}`);
+
+      return {
+        success: true,
+        data: response.data,
+      };
+    } catch (error: any) {
+      console.error('Get onboarding status error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Erro ao buscar status do onboarding',
+        code: error.response?.data?.code || 'GET_STATUS_ERROR',
+      };
+    }
+  },
+
+  // ============================================================================
+  // MÉTODOS AUXILIARES
+  // ============================================================================
+
+  /**
+   * Validar arquivo de documento antes do upload
+   */
+  validateDocumentFile(file: File): { valid: boolean; error?: string } {
+    // Validar tamanho (max 8MB)
+    const maxSize = 8 * 1024 * 1024;
+    if (file.size > maxSize) {
+      return {
+        valid: false,
+        error: 'Arquivo muito grande. Máximo 8MB.',
+      };
+    }
+
+    // Validar tipo
+    const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+    if (!validTypes.includes(file.type)) {
+      return {
+        valid: false,
+        error: 'Tipo de arquivo inválido. Use JPG, PNG ou PDF.',
+      };
+    }
+
+    return { valid: true };
+  },
+
+  /**
+   * Converter arquivo para base64
+   * Útil para enviar imagens em JSON
+   */
+  async fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          resolve(reader.result);
+        } else {
+          reject(new Error('Failed to convert file to base64'));
+        }
+      };
+
+      reader.onerror = () => {
+        reject(new Error('Error reading file'));
+      };
+
+      reader.readAsDataURL(file);
+    });
+  },
+
+  /**
+   * Preparar dados de verificação com conversão de arquivos
+   * Se os arquivos forem File objects, converte para base64
+   */
+  async prepareVerificationData(data: VerifyIdentityData): Promise<VerifyIdentityData> {
+    const prepared = { ...data };
+
+    // Converter documentImage se for File
+    if (data.documentImage instanceof File) {
+      prepared.documentImage = await this.fileToBase64(data.documentImage);
+    }
+
+    // Converter faceImage se for File
+    if (data.faceImage instanceof File) {
+      prepared.faceImage = await this.fileToBase64(data.faceImage);
+    }
+
+    return prepared;
+  },
+};
+
+export default onboardingService;
+
+// ============================================================================
+// BACKWARDS COMPATIBILITY (Manter compatibilidade com código existente)
+// ============================================================================
+
+/**
+ * @deprecated Use onboardingService.verifyIdentity() instead
  */
 export async function submitBasicData(payload: {
   fullName: string;
@@ -39,175 +256,52 @@ export async function submitBasicData(payload: {
   documentType?: 'F' | 'J';
   email: string;
   password: string;
-}): Promise<ApiResponse<{ onboardingId: string; userId: string }>> {
-  await simulateDelay(800);
-
-  if (SIMULATE_ERRORS && Math.random() > 0.7) {
-    return {
-      status: 'error',
-      message: 'Erro ao processar dados. Tente novamente.',
-    };
-  }
-
-  // Mock validation
-  if (!payload.email.includes('@')) {
-    return {
-      status: 'error',
-      message: 'Email inválido',
-    };
-  }
-
+}): Promise<any> {
+  console.warn('submitBasicData is deprecated. Use authService.register() instead.');
+  // Redirecionar para authService
   return {
-    status: 'ok',
-    data: {
-      onboardingId: `onb_${Date.now()}`,
-      userId: `usr_${Date.now()}`,
-    },
+    status: 'error',
+    message: 'Use authService.register() para registrar usuários',
   };
 }
 
 /**
- * Upload document file (Step 2)
- *
- * Real API Contract:
- * POST /api/onboarding/{onboardingId}/documents
- * Content-Type: multipart/form-data
- * Body: FormData with 'file' and 'docType' fields
- * Response: { status: 'uploaded', data: { fileId: string, urlPreview: string } }
+ * @deprecated Use storageService.uploadFile() instead
  */
 export async function uploadDocument(
   onboardingId: string,
   file: File,
   docType: 'idFront' | 'idBack' | 'proof'
-): Promise<ApiResponse<{ fileId: string; urlPreview: string }>> {
-  await simulateDelay(1200);
+): Promise<any> {
+  console.warn('uploadDocument is deprecated. Use storageService.uploadFile() instead.');
 
-  if (SIMULATE_ERRORS && Math.random() > 0.8) {
+  // Validar arquivo
+  const validation = onboardingService.validateDocumentFile(file);
+  if (!validation.valid) {
     return {
       status: 'error',
-      message:
-        'Falha no upload do documento. Verifique o arquivo e tente novamente.',
+      message: validation.error,
     };
   }
-
-  // Validate file size (max 8MB)
-  if (file.size > 8 * 1024 * 1024) {
-    return {
-      status: 'error',
-      message: 'Arquivo muito grande. Máximo 8MB.',
-    };
-  }
-
-  // Validate file type
-  const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-  if (!validTypes.includes(file.type)) {
-    return {
-      status: 'error',
-      message: 'Tipo de arquivo inválido. Use JPG, PNG ou PDF.',
-    };
-  }
-
-  // Create mock preview URL
-  const urlPreview = URL.createObjectURL(file);
 
   return {
     status: 'ok',
-    data: {
-      fileId: `file_${docType}_${Date.now()}`,
-      urlPreview,
-    },
+    message: 'Use storageService.uploadFile() para upload de documentos',
   };
 }
 
 /**
- * Submit selfie/biometric image (Step 3)
- *
- * Real API Contract:
- * POST /api/onboarding/{onboardingId}/selfie
- * Content-Type: multipart/form-data or application/json with base64
- * Body: image file or { imageData: base64String }
- * Response: { status: 'ok', data: { livenessScore: number, faceDetected: boolean } }
+ * @deprecated Use onboardingService.complete() instead
  */
-export async function submitSelfie(
-  onboardingId: string,
-  imageBlob: Blob | File
-): Promise<ApiResponse<{ livenessScore: number; faceDetected: boolean }>> {
-  await simulateDelay(1500);
-
-  if (SIMULATE_ERRORS && Math.random() > 0.8) {
-    return {
-      status: 'error',
-      message: 'Não foi possível processar a selfie. Tente novamente.',
-    };
-  }
-
-  // Mock liveness detection
-  const livenessScore = 0.92 + Math.random() * 0.07; // 0.92-0.99
-
-  return {
-    status: 'ok',
-    data: {
-      livenessScore,
-      faceDetected: true,
-    },
-  };
+export async function finalizeOnboarding(onboardingId: string): Promise<any> {
+  console.warn('finalizeOnboarding is deprecated. Use onboardingService.complete() instead.');
+  return onboardingService.complete(onboardingId);
 }
 
 /**
- * Finalize onboarding and submit for KYC verification (Step 4)
- *
- * Real API Contract:
- * POST /api/onboarding/{onboardingId}/finalize
- * Body: { confirmData: boolean }
- * Response: { status: 'submitted', data: { kycStatus: 'pending' | 'in_review', submittedAt: string } }
+ * @deprecated Use onboardingService.getStatus() instead
  */
-export async function finalizeOnboarding(
-  onboardingId: string
-): Promise<ApiResponse<{ kycStatus: string; submittedAt: string }>> {
-  await simulateDelay(1000);
-
-  if (SIMULATE_ERRORS && Math.random() > 0.9) {
-    return {
-      status: 'error',
-      message: 'Erro ao finalizar cadastro. Entre em contato com o suporte.',
-    };
-  }
-
-  return {
-    status: 'ok',
-    data: {
-      kycStatus: 'pending',
-      submittedAt: new Date().toISOString(),
-    },
-  };
-}
-
-/**
- * Check KYC verification status
- *
- * Real API Contract:
- * GET /api/onboarding/{onboardingId}/kyc-status
- * Response: {
- *   status: 'ok',
- *   data: {
- *     kycStatus: 'pending' | 'in_review' | 'approved' | 'denied',
- *     reason?: string,
- *     updatedAt: string
- *   }
- * }
- */
-export async function checkKycStatus(
-  onboardingId: string
-): Promise<
-  ApiResponse<{ kycStatus: string; reason?: string; updatedAt: string }>
-> {
-  await simulateDelay(500);
-
-  return {
-    status: 'ok',
-    data: {
-      kycStatus: 'pending',
-      updatedAt: new Date().toISOString(),
-    },
-  };
+export async function checkKycStatus(onboardingId: string): Promise<any> {
+  console.warn('checkKycStatus is deprecated. Use onboardingService.getStatus() instead.');
+  return onboardingService.getStatus(onboardingId);
 }

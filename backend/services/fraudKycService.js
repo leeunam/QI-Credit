@@ -5,12 +5,12 @@ const { v4: uuidv4 } = require('uuid');
 const KycVerification = require('../../database/models/kycverificationModel');
 
 // Determine if we're running in mock mode
-const isMockMode = config.QITECH_MOCK_MODE === 'true';
+const isMockMode = config.qitech.mockMode;
 
 class QitechFraudKycAPI {
   constructor(baseURL, apiKey) {
-    this.apiKey = apiKey || config.QITECH_API_KEY;
-    this.baseURL = baseURL || config.QITECH_FRAUD_URL;
+    this.apiKey = apiKey || config.qitech.apiKey;
+    this.baseURL = baseURL || config.qitech.fraudUrl;
     
     // Only initialize axios client if not in mock mode
     if (!isMockMode) {
@@ -378,8 +378,8 @@ class QitechFraudKycAPI {
 class FraudKycService {
   constructor() {
     this.qitechAPI = new QitechFraudKycAPI(
-      config.QITECH_FRAUD_URL,
-      config.QITECH_API_KEY
+      config.qitech.fraudUrl,
+      config.qitech.apiKey
     );
   }
 
@@ -492,10 +492,21 @@ class FraudKycService {
 
       const overallStatus = this.determineOverallKycStatus(deviceScan, fraudScore, faceVerification);
 
+      // Verificar se o usuário existe antes de inserir
+      const userId = userData.id || userData.userId;
+      if (!userId) {
+        throw new Error('User ID is required for KYC verification');
+      }
+
+      const userExists = await db('users').where('id', userId).first();
+      if (!userExists) {
+        throw new Error(`User with ID ${userId} not found`);
+      }
+
       // Persist KYC verification to database
       const kycVerificationData = {
         id: uuidv4(),
-        user_id: userData.id || userData.userId,
+        user_id: userId,
         verification_type: 'FULL_KYC', // Required NOT NULL field
         status: overallStatus,
         document_type: userData.document_type || 'CPF',
@@ -519,7 +530,7 @@ class FraudKycService {
 
       return {
         success: true,
-        userId: userData.id || userData.userId,
+        userId: userId,
         deviceScan,
         fraudScore,
         faceVerification,

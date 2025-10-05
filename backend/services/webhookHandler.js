@@ -8,7 +8,7 @@ const { v4: uuidv4 } = require('uuid');
 
 class WebhookHandler {
   constructor() {
-    this.qitechWebhookSecret = config.QITECH_WEBHOOK_SECRET || 'default_secret';
+    this.qitechWebhookSecret = config.qitech.webhookSecret || 'default_secret';
     this.supportedEvents = [
       'credit_analysis.completed',
       'credit_analysis.failed',

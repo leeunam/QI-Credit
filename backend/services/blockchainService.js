@@ -2,7 +2,7 @@ const ethers = require('ethers');
 const config = require('../config/config');
 
 // Determine if we're running in mock mode
-const isMockMode = config.BLOCKCHAIN_MOCK_MODE === 'true';
+const isMockMode = config.BLOCKCHAIN_MOCK_MODE === 'true' || config.blockchain?.mockMode;
 
 // Blockchain Service for interacting with smart contracts on Gnosis/Arbitrum
 class BlockchainService {
@@ -10,17 +10,17 @@ class BlockchainService {
     // Initialize provider based on configuration - only if not in mock mode
     if (!isMockMode) {
       this.provider = new ethers.JsonRpcProvider(
-        config.BLOCKCHAIN_RPC_URL || 'http://localhost:8545'
+        config.blockchain.rpcUrl || 'http://localhost:8545'
       );
-      
+
       // Initialize wallet with private key
       this.wallet = new ethers.Wallet(
-        config.PRIVATE_KEY || ethers.Wallet.createRandom().privateKey
+        config.blockchain.privateKey || ethers.Wallet.createRandom().privateKey
       ).connect(this.provider);
-      
+
       // Contract addresses (to be updated after deployment)
-      this.escrowContractAddress = config.ESCROW_CONTRACT_ADDRESS;
-      this.tokenContractAddress = config.TOKEN_CONTRACT_ADDRESS;
+      this.escrowContractAddress = config.blockchain.escrowAddress;
+      this.tokenContractAddress = config.blockchain.tokenAddress;
       
       // Contract ABIs (to be imported from artifacts)
       this.escrowContractABI = [

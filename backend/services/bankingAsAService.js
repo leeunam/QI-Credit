@@ -5,12 +5,12 @@ const { v4: uuidv4 } = require('uuid');
 const DigitalAccount = require('../../database/models/digitalaccountModel');
 
 // Determine if we're running in mock mode
-const isMockMode = config.QITECH_MOCK_MODE === 'true';
+const isMockMode = config.qitech.mockMode;
 
 class QitechBaaSAPI {
   constructor(baseURL, apiKey) {
-    this.apiKey = apiKey || config.QITECH_API_KEY;
-    this.baseURL = baseURL || config.QITECH_BANKING_URL;
+    this.apiKey = apiKey || config.qitech.apiKey;
+    this.baseURL = baseURL || config.qitech.bankingUrl;
     
     // Only initialize axios client if not in mock mode
     if (!isMockMode) {
@@ -248,8 +248,8 @@ class QitechBaaSAPI {
 class BankingAsAService {
   constructor() {
     this.qitechAPI = new QitechBaaSAPI(
-      config.QITECH_BANKING_URL,
-      config.QITECH_API_KEY
+      config.qitech.bankingUrl,
+      config.qitech.apiKey
     );
   }
 
@@ -275,17 +275,17 @@ class BankingAsAService {
       // Persist to database
       const digitalAccountData = {
         id: uuidv4(),
-        user_id: userData.user_id || userData.id,
-        external_account_id: result.id || result.account_id,
-        account_number: result.account_number,
+        user_id: userData.userId || userData.user_id || userData.id,
+        account_id: result.id || result.account_id,
         agency_number: result.agency_number,
+        account_number: result.account_number,
         account_digit: result.account_digit || '0',
         bank_code: result.bank_code,
         bank_name: result.bank_name || 'QI Tech Bank',
         account_type: result.account_type?.toUpperCase() || 'CHECKING',
         status: result.status?.toUpperCase() || 'ACTIVE',
-        balance: result.balance?.available || 0,
         pix_keys: JSON.stringify(result.pix_keys || []),
+        balance: 0, // Inicialmente zero
         metadata: JSON.stringify({
           qitech_response: result,
           created_from_service: true

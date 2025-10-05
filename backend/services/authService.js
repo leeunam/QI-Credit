@@ -225,12 +225,12 @@ class AuthService {
           id: data.user.id,
           email: data.user.email,
           metadata: data.user.user_metadata,
+          full_name: data.user.user_metadata?.full_name || localUserData?.name || '',
           role: data.user.app_metadata?.role || 'user',
           created_at: data.user.created_at,
           email_verified: data.user.email_confirmed_at !== null,
           // Dados locais se disponíveis
           ...(localUserData && {
-            full_name: localUserData.full_name,
             phone: localUserData.phone,
             last_login: localUserData.last_login,
           }),

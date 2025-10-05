@@ -6,16 +6,17 @@ exports.seed = async function(knex) {
   const offers = await knex('marketplace_offers').select('id', 'investor_id').limit(1);
   
   if (users.length >= 2 && offers.length >= 1) {
-    await knex('loans').insert([
+    await knex('loan_contracts').insert([
       {
         id: uuidv4(),
         borrower_id: users[1].id, 
-        marketplace_offer_id: offers[0].id,
-        amount: 8000.00,
-        rate: 0.15,
-        term_days: 360,
+        offer_id: offers[0].id,
+        lender_id: offers[0].investor_id,
+        principal: 8000.00,
+        interest_rate: 0.15,
+        installments: 12,
         status: 'ACTIVE',
-        disbursed_at: knex.fn.now(),
+        signed_at: knex.fn.now(),
         created_at: knex.fn.now(),
         updated_at: knex.fn.now()
       }

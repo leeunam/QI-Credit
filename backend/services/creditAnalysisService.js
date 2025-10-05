@@ -4,12 +4,12 @@ const { CreditAnalysis, User } = require('../../database/models/indexModel');
 const db = require('../config/database');
 
 // Determine if we're running in mock mode
-const isMockMode = config.QITECH_MOCK_MODE === 'true';
+const isMockMode = config.qitech.mockMode;
 
 class QitechCreditAnalysisAPI {
   constructor(baseURL, apiKey) {
-    this.apiKey = apiKey || config.QITECH_API_KEY;
-    this.baseURL = baseURL || config.QITECH_CREDIT_ANALYSIS_URL;
+    this.apiKey = apiKey || config.qitech.apiKey;
+    this.baseURL = baseURL || config.qitech.creditUrl;
     
     // Only initialize axios client if not in mock mode
     if (!isMockMode) {
@@ -222,8 +222,8 @@ class QitechCreditAnalysisAPI {
 class CreditAnalysisService {
   constructor() {
     this.qitechAPI = new QitechCreditAnalysisAPI(
-      config.QITECH_CREDIT_ANALYSIS_URL,
-      config.QITECH_API_KEY
+      config.qitech.creditUrl,
+      config.qitech.apiKey
     );
   }
 
@@ -280,9 +280,18 @@ class CreditAnalysisService {
       const result = await this.qitechAPI.submitNaturalPerson(payload);
       return {
         success: true,
-        analysisId: result.id,
-        status: result.analysis_status,
-        analysis: result
+        data: {
+          analysisId: result.id,
+          status: result.analysis_status,
+          score: result.score,
+          approvedAmount: result.approved_amount,
+          interestRate: result.interest_rate,
+          installments: result.number_of_installments,
+          decisionDetails: result.decision_details,
+          analysisDate: result.analysis_date,
+          eventDate: result.event_date,
+          analysis: result
+        }
       };
     } catch (error) {
       console.error('Error in individual credit analysis:', error);
@@ -331,9 +340,18 @@ class CreditAnalysisService {
       const result = await this.qitechAPI.submitLegalPerson(payload);
       return {
         success: true,
-        analysisId: result.id,
-        status: result.analysis_status,
-        analysis: result
+        data: {
+          analysisId: result.id,
+          status: result.analysis_status,
+          score: result.score,
+          approvedAmount: result.approved_amount,
+          interestRate: result.interest_rate,
+          installments: result.number_of_installments,
+          decisionDetails: result.decision_details,
+          analysisDate: result.analysis_date,
+          eventDate: result.event_date,
+          analysis: result
+        }
       };
     } catch (error) {
       console.error('Error in business credit analysis:', error);
@@ -378,11 +396,16 @@ class CreditAnalysisService {
   async getCreditScore(userId, entityType = 'natural_person') {
     // This would typically fetch from the database or from QITech API
     // For now, returning a mock implementation
+    const score = this.generateMockCreditScore();
     return {
-      userId,
-      creditScore: this.generateMockCreditScore(),
-      riskLevel: this.determineRiskLevel(this.generateMockCreditScore()),
-      lastUpdated: new Date().toISOString()
+      success: true,
+      data: {
+        userId,
+        score,
+        creditScore: score,
+        riskLevel: this.determineRiskLevel(score),
+        lastUpdated: new Date().toISOString()
+      }
     };
   }
 

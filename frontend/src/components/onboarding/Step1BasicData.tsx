@@ -3,10 +3,10 @@ import { useOnboarding } from '@/contexts/OnboardingContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { submitBasicData } from '@/services/onboardingService';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { validationUtils } from '@/lib/validationUtils';
+import { authService } from '@/services/authService';
 
 export const Step1BasicData: React.FC = () => {
   const { data, updateData, nextStep } = useOnboarding();
@@ -56,33 +56,39 @@ export const Step1BasicData: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await submitBasicData({
-        fullName: data.fullName,
-        document: data.document,
-        documentType: data.documentType,
+      // Usar authService.register() em vez de submitBasicData()
+      const response = await authService.register({
         email: data.email,
         password: data.password,
+        full_name: data.fullName,
+        phone: '', // Telefone será adicionado posteriormente
+        document: data.document
       });
 
-      if (response.status === 'ok' && response.data) {
-        updateData({ onboardingId: response.data.onboardingId });
+      if (response.success && response.data) {
+        // Atualizar contexto com os dados do usuário registrado
+        updateData({ 
+          onboardingId: response.data.user.id,
+          userId: response.data.user.id
+        });
+        
         toast({
-          title: 'Dados salvos!',
-          description: 'Prossiga para o próximo passo.',
+          title: 'Conta criada!',
+          description: 'Dados salvos com sucesso. Prosseguindo para o próximo passo.',
         });
         nextStep();
       } else {
         toast({
           variant: 'destructive',
           title: 'Erro',
-          description: response.message || 'Erro ao processar dados',
+          description: response.error || 'Erro ao criar conta',
         });
       }
     } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Erro',
-        description: 'Ocorreu um erro inesperado',
+        description: 'Ocorreu um erro inesperado ao criar sua conta',
       });
     } finally {
       setLoading(false);

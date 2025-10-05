@@ -22,9 +22,35 @@ const createDigitalAccount = async (req, res) => {
         area_code: phone?.area_code || '11',
         number: phone?.number || '999999999'
       },
-      userId,
+      userId: userId || req.user?.id, // Use o userId do body ou do token de autenticação
+      user_id: userId || req.user?.id, // Also set user_id for compatibility
       type
     };
+    
+    // Validate that we have a userId
+    if (!accountData.userId) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'User ID is required' 
+      });
+    }
+    
+    // Validate that user exists
+    try {
+      const userExists = await db('users').where('id', accountData.userId).first();
+      if (!userExists) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'User not found' 
+        });
+      }
+    } catch (dbError) {
+      console.error('Error checking user existence:', dbError);
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Error checking user existence' 
+      });
+    }
     
     // Create account with QITech BaaS
     const result = await bankingAsAService.createDigitalAccount(accountData);
