@@ -2,7 +2,7 @@
 
 /**
  * QI Credit - Script de Configuração de Ambiente
- * 
+ *
  * Copia .env.example para .env e guia o usuário através da configuração
  */
 
@@ -25,16 +25,17 @@ const log = {
   success: (msg) => console.log(`${colors.green}✅ ${msg}${colors.reset}`),
   error: (msg) => console.log(`${colors.red}❌ ${msg}${colors.reset}`),
   warning: (msg) => console.log(`${colors.yellow}⚠️  ${msg}${colors.reset}`),
-  title: (msg) => console.log(`\n${colors.bold}${colors.cyan}${msg}${colors.reset}\n`),
+  title: (msg) =>
+    console.log(`\n${colors.bold}${colors.cyan}${msg}${colors.reset}\n`),
 };
 
 const rl = readline.createInterface({
   input: process.stdin,
-  output: process.stdout
+  output: process.stdout,
 });
 
 function question(query) {
-  return new Promise(resolve => rl.question(query, resolve));
+  return new Promise((resolve) => rl.question(query, resolve));
 }
 
 async function main() {
@@ -73,7 +74,9 @@ async function main() {
 
   console.log('\n' + colors.bold + 'Próximos passos:' + colors.reset);
   console.log('1. Configure as variáveis no arquivo .env:');
-  console.log(`   ${colors.cyan}nano .env${colors.reset} (ou seu editor preferido)`);
+  console.log(
+    `   ${colors.cyan}nano .env${colors.reset} (ou seu editor preferido)`
+  );
   console.log('\n2. Variáveis importantes para configurar:');
   console.log('   • DB_PASSWORD - senha do PostgreSQL');
   console.log('   • QITECH_API_KEY - chave da API QI Tech');
@@ -81,12 +84,12 @@ async function main() {
   console.log('   • PRIVATE_KEY - chave privada blockchain');
   console.log('\n3. Execute o setup completo:');
   console.log(`   ${colors.cyan}npm run setup${colors.reset}`);
-  
+
   rl.close();
 }
 
 if (require.main === module) {
-  main().catch(error => {
+  main().catch((error) => {
     log.error(`Erro: ${error.message}`);
     process.exit(1);
   });

@@ -32,7 +32,8 @@ const log = {
   success: (msg) => console.log(`${colors.green}✅ ${msg}${colors.reset}`),
   error: (msg) => console.log(`${colors.red}❌ ${msg}${colors.reset}`),
   warning: (msg) => console.log(`${colors.yellow}⚠️  ${msg}${colors.reset}`),
-  title: (msg) => console.log(`\n${colors.bold}${colors.cyan}${msg}${colors.reset}\n`),
+  title: (msg) =>
+    console.log(`\n${colors.bold}${colors.cyan}${msg}${colors.reset}\n`),
 };
 
 // Quick environment validation (removed - now inline)

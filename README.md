@@ -214,19 +214,19 @@ erDiagram
 
 Antes de começar, certifique-se de ter instalado:
 
-| Requisito | Versão Mínima | Como Instalar |
-|-----------|---------------|---------------|
-| **Node.js** | 18.x ou superior | [nodejs.org](https://nodejs.org/) |
-| **npm** | 9.x ou superior | Vem com Node.js |
-| **Git** | Qualquer versão recente | [git-scm.com](https://git-scm.com/) |
-| **PostgreSQL** (opcional) | 14.x ou superior | [postgresql.org](https://www.postgresql.org/) ou usar Docker |
+| Requisito                 | Versão Mínima           | Como Instalar                                                |
+| ------------------------- | ----------------------- | ------------------------------------------------------------ |
+| **Node.js**               | 18.x ou superior        | [nodejs.org](https://nodejs.org/)                            |
+| **npm**                   | 9.x ou superior         | Vem com Node.js                                              |
+| **Git**                   | Qualquer versão recente | [git-scm.com](https://git-scm.com/)                          |
+| **PostgreSQL** (opcional) | 14.x ou superior        | [postgresql.org](https://www.postgresql.org/) ou usar Docker |
 
 #### Verificar Instalações
 
 ```bash
 # Verifique as versões instaladas
 node --version    # deve mostrar v18.x.x ou superior
-npm --version     # deve mostrar 9.x.x ou superior  
+npm --version     # deve mostrar 9.x.x ou superior
 git --version     # qualquer versão recente
 ```
 
@@ -278,7 +278,7 @@ npm run setup
 
 # Se der erro, tente instalar separadamente:
 npm install                    # Dependências raiz
-cd backend && npm install     # Dependências backend  
+cd backend && npm install     # Dependências backend
 cd ../frontend && npm install # Dependências frontend
 cd ../blockchain && npm install # Dependências blockchain
 cd ..                         # Voltar para raiz
@@ -338,29 +338,27 @@ npm run start:frontend # Frontend na porta 8080
 ```
 
 **Pronto! Acesse:**
+
 - **Frontend**: http://localhost:8080
 - **Backend API**: http://localhost:3000
 
 ### Scripts Disponíveis
 
-| Comando | Descrição |
-|---------|-----------|
-| `npm run setup:env` | Cria .env a partir do .env.example |
-| `npm run setup` | Instalação completa (dependências + migrações) |
-| `npm start` | Inicia aplicação completa |
-| `npm run dev` | Modo desenvolvimento com hot-reload |
-| `npm run build` | Build de produção |
-| `npm test` | Executa todos os testes |
-| `npm run lint` | Verifica qualidade do código |
-| `npm run clean` | Limpa cache e arquivos temporários |
+| Comando             | Descrição                                      |
+| ------------------- | ---------------------------------------------- |
+| `npm run setup:env` | Cria .env a partir do .env.example             |
+| `npm run setup`     | Instalação completa (dependências + migrações) |
+| `npm start`         | Inicia aplicação completa                      |
+| `npm run dev`       | Modo desenvolvimento com hot-reload            |
+| `npm run build`     | Build de produção                              |
+| `npm test`          | Executa todos os testes                        |
+| `npm run lint`      | Verifica qualidade do código                   |
+| `npm run clean`     | Limpa cache e arquivos temporários             |
 
 ### Resolução de Problemas
 
-### 🐛 Resolução de Problemas
-
-**Problemas comuns e soluções rápidas:**
-
 #### PostgreSQL não conecta
+
 ```bash
 # Docker (recomendado):
 docker run --name postgres-qicredit -e POSTGRES_DB=qicredit_db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres:14
@@ -371,6 +369,7 @@ brew services start postgresql   # macOS
 ```
 
 #### Portas ocupadas
+
 ```bash
 # Verificar portas em uso
 netstat -tulpn | grep :3000
@@ -381,12 +380,11 @@ kill -9 PID
 ```
 
 #### Dependências com erro
+
 ```bash
 npm run clean
 npm run setup
 ```
-
-**📋 Para problemas mais complexos, consulte o [Guia Completo de Troubleshooting](docs/troubleshooting.md)**
 
 ### Configurações de Produção
 
@@ -587,6 +585,25 @@ contract SimpleEscrow {
         emit Refunded(loanId, l.investor, l.amount, keccak256(abi.encodePacked(loanId, l.investor, l.amount, block.timestamp)));
     }
 }
+```
+
+---
+
+## Verificação Final
+
+Após a instalação, verifique se tudo está funcionando:
+
+```bash
+# 1. Verificar se os serviços sobem sem erro
+npm run dev
+
+# 2. Testar endpoints básicos
+curl http://localhost:3000/health
+curl http://localhost:8080
+
+# 3. Verificar logs (não deve ter erros críticos)
+# Backend deve mostrar: "Server running on port 3000"
+# Frontend deve mostrar: "Local: http://localhost:8080"
 ```
 
 ---
