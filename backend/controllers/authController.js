@@ -20,7 +20,10 @@ class AuthController {
         });
       }
 
-      const { email, password, full_name, phone, role } = req.body;
+      const { email, password, full_name, phone, role, document } = req.body;
+      
+      // Log para debugging
+      console.log('📥 Payload recebido no registro:', req.body);
 
       // Validações básicas
       if (!email || !password) {
@@ -44,6 +47,7 @@ class AuthController {
         full_name,
         phone,
         role: role || 'user',
+        document: document || 'temp-doc' // Adicionar document se fornecido
       });
 
       if (!result.success) {
