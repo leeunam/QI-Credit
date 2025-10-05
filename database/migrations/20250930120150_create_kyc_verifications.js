@@ -1,5 +1,3 @@
-// Migration: create_kyc_verifications
-
 exports.up = async function (knex) {
   await knex.schema.createTable('kyc_verifications', (table) => {
     table.uuid('id').primary();

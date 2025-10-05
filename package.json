@@ -4,34 +4,37 @@
   "description": "",
   "main": "backend/server.js",
   "scripts": {
-    "start": "npm run start:backend",
-    "start:backend": "cd backend && node server.js",
-    "dev": "npm run dev:backend",
-    "dev:backend": "cd backend && nodemon server.js",
-    "test": "npm run test:backend && npm run test:blockchain",
-    "test:backend": "cd backend && jest",
-    "test:blockchain": "cd blockchain && npx hardhat test",
-    "deploy:contracts": "cd blockchain && npx hardhat run scripts/deploy.js",
-    "setup": "sh scripts/setup.sh",
-    "docs": "docsify serve docs"
+    "start": "node scripts/start.js",
+    "validate": "node scripts/validate-all.js",
+    "start:backend": "cd backend && npm run dev",
+    "start:frontend": "cd frontend && npm run dev",
+    "dev": "node scripts/start.js",
+    "setup": "npm install && cd backend && npm install && cd ../frontend && npm install && cd .. && npm run db:migrate",
+    "db:migrate": "cd backend && npx knex migrate:latest --knexfile ../database/knexfile.js",
+    "db:rollback": "cd backend && npx knex migrate:rollback --knexfile ../database/knexfile.js",
+    "db:status": "cd backend && npx knex migrate:status --knexfile ../database/knexfile.js"
   },
-  "keywords": [
-    "fintech",
-    "p2p",
-    "credit",
-    "blockchain",
-    "evm",
-    "smart-contracts"
-  ],
+  "keywords": [],
   "author": "QI Credit Team",
   "license": "MIT",
   "devDependencies": {
-    "concurrently": "^8.2.0"
+    "concurrently": "^8.2.0",
+    "nodemon": "^3.1.10"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.58.0",
+    "axios": "^1.12.2",
     "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "express-validator": "^7.2.1",
     "helmet": "^8.1.0",
-    "morgan": "^1.10.1"
+    "jsonwebtoken": "^9.0.2",
+    "jwks-rsa": "^3.2.0",
+    "knex": "^3.1.0",
+    "morgan": "^1.10.1",
+    "multer": "^1.4.5-lts.1",
+    "pg": "^8.11.3",
+    "uuid": "^13.0.0"
   }
 }

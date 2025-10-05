@@ -1,5 +1,3 @@
-// Migration: create_holds
-
 exports.up = async function (knex) {
   await knex.schema.createTable('holds', (table) => {
     table.uuid('id').primary();

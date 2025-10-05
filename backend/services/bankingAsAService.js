@@ -1,5 +1,8 @@
 const axios = require('axios');
 const config = require('../config/config');
+const db = require('../config/database');
+const { v4: uuidv4 } = require('uuid');
+const DigitalAccount = require('../../database/models/digitalaccountModel');
 
 // Determine if we're running in mock mode
 const isMockMode = config.QITECH_MOCK_MODE === 'true';
@@ -263,8 +266,40 @@ class BankingAsAService {
       }
     };
 
+    const trx = await db.transaction();
+
     try {
+      // Call QITech API to create account
       const result = await this.qitechAPI.createAccount(accountData);
+
+      // Persist to database
+      const digitalAccountData = {
+        id: uuidv4(),
+        user_id: userData.user_id || userData.id,
+        external_account_id: result.id || result.account_id,
+        account_number: result.account_number,
+        agency_number: result.agency_number,
+        account_digit: result.account_digit || '0',
+        bank_code: result.bank_code,
+        bank_name: result.bank_name || 'QI Tech Bank',
+        account_type: result.account_type?.toUpperCase() || 'CHECKING',
+        status: result.status?.toUpperCase() || 'ACTIVE',
+        balance: result.balance?.available || 0,
+        pix_keys: JSON.stringify(result.pix_keys || []),
+        metadata: JSON.stringify({
+          qitech_response: result,
+          created_from_service: true
+        }),
+        created_at: new Date(),
+        updated_at: new Date()
+      };
+
+      const [dbAccount] = await trx('digital_accounts')
+        .insert(digitalAccountData)
+        .returning('*');
+
+      await trx.commit();
+
       return {
         success: true,
         accountId: result.id,
@@ -272,9 +307,11 @@ class BankingAsAService {
         agencyNumber: result.agency_number,
         bankCode: result.bank_code,
         pixKey: result.pix_key,
-        accountDetails: result
+        accountDetails: result,
+        dbRecord: dbAccount
       };
     } catch (error) {
+      await trx.rollback();
       console.error('Error creating digital account:', error);
       return {
         success: false,

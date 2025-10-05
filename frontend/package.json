@@ -13,7 +13,22 @@
     "lint:check": "eslint .",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist node_modules/.vite",
-    "reinstall": "rm -rf node_modules package-lock.json && npm install"
+    "reinstall": "rm -rf node_modules package-lock.json && npm install",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install && cd ..",
+    "postinstall": "npm run install:deps"
+  },
+  "keywords": [
+    "fintech",
+    "p2p", 
+    "credit",
+    "blockchain",
+    "evm",
+    "smart-contracts"
+  ],
+  "author": "QI Credit Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.0"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -64,7 +79,12 @@
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.9",
-    "zod": "^3.25.76"
+    "zod": "^3.25.76",
+    "pg": "^8.11.3",
+   "multer": "^1.4.5-lts.1",
+   "uuid": "^9.0.1",
+   "axios": "^1.6.2",
+   "nodemon": "^3.0.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",

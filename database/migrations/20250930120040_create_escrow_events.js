@@ -1,5 +1,3 @@
-// Migration: create_escrow_events
-
 exports.up = async function (knex) {
   await knex.schema.createTable('escrow_events', (table) => {
     table.uuid('id').primary();

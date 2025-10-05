@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const fraudKycService = require('../services/fraudKycService');
+const { authenticateToken } = require('../middlewares/auth');
 
 // Device scan for fraud prevention
-router.post('/device-scan', async (req, res) => {
+router.post('/device-scan', authenticateToken, async (req, res) => {
   try {
     const deviceData = req.body;
     
@@ -75,12 +76,16 @@ router.get('/open-finance/:userId/:dataType?', async (req, res) => {
 });
 
 // Full KYC verification
-router.post('/kyc/verify', async (req, res) => {
+router.post('/kyc/verify', authenticateToken, async (req, res) => {
   try {
-    const userData = req.body;
-    
+    const userData = {
+      ...req.body,
+      userId: req.user.id, // Extract user ID from auth token
+      id: req.user.id,      // Some services might use 'id' instead
+    };
+
     const result = await fraudKycService.performFullKYC(userData);
-    
+
     if (result.success) {
       res.status(200).json(result);
     } else {

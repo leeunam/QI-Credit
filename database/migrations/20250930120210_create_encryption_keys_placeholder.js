@@ -1,6 +1,3 @@
-// Migration: encryption keys placeholder (logical, no real keys stored here)
-// This table can store key metadata (NOT the private material) for future KMS integration.
-
 exports.up = async function (knex) {
   await knex.schema.createTable('encryption_key_metadata', (table) => {
     table.uuid('id').primary();

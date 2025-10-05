@@ -6,6 +6,7 @@
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+**.env
 
 # Production builds
 dist/
@@ -232,6 +233,7 @@ docker-compose.override.yml
 # --- Adições vindas do branch main (não estavam no bloco docs) ---
 dist-ssr
 *.local
+
 # Editor directories and files
 .vscode/*
 *.suo

@@ -1,5 +1,3 @@
-// Migration: create_webhook_events
-
 exports.up = async function (knex) {
   await knex.schema.createTable('webhook_events', (table) => {
     table.uuid('id').primary();

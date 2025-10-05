@@ -1,5 +1,8 @@
 const axios = require('axios');
 const config = require('../config/config');
+const db = require('../config/database');
+const { v4: uuidv4 } = require('uuid');
+const KycVerification = require('../../database/models/kycverificationModel');
 
 // Determine if we're running in mock mode
 const isMockMode = config.QITECH_MOCK_MODE === 'true';
@@ -466,6 +469,8 @@ class FraudKycService {
 
   // Perform full KYC verification
   async performFullKYC(userData) {
+    const trx = await db.transaction();
+
     try {
       // Perform all required KYC checks
       const deviceScan = await this.performDeviceScan({
@@ -473,9 +478,9 @@ class FraudKycService {
         ip_address: userData.ip || '192.168.1.1',
         user_agent: userData.user_agent || 'Mock User Agent'
       });
-      
+
       const fraudScore = await this.getAntifraudScore(userData);
-      
+
       let faceVerification = null;
       if (userData.faceImage && userData.documentImage) {
         faceVerification = await this.performFaceVerification({
@@ -484,17 +489,46 @@ class FraudKycService {
           verification_image: userData.faceImage
         });
       }
-      
+
+      const overallStatus = this.determineOverallKycStatus(deviceScan, fraudScore, faceVerification);
+
+      // Persist KYC verification to database
+      const kycVerificationData = {
+        id: uuidv4(),
+        user_id: userData.id || userData.userId,
+        verification_type: 'FULL_KYC', // Required NOT NULL field
+        status: overallStatus,
+        document_type: userData.document_type || 'CPF',
+        document_number: userData.document,
+        verification_method: 'FULL_KYC',
+        device_scan_result: JSON.stringify(deviceScan),
+        fraud_score_result: JSON.stringify(fraudScore),
+        face_verification_result: JSON.stringify(faceVerification),
+        ip_address: userData.ip || '192.168.1.1',
+        user_agent: userData.user_agent,
+        verified_at: overallStatus === 'APPROVED' ? new Date() : null,
+        created_at: new Date(),
+        updated_at: new Date()
+      };
+
+      const [dbVerification] = await trx('kyc_verifications')
+        .insert(kycVerificationData)
+        .returning('*');
+
+      await trx.commit();
+
       return {
         success: true,
         userId: userData.id || userData.userId,
         deviceScan,
         fraudScore,
         faceVerification,
-        overallStatus: this.determineOverallKycStatus(deviceScan, fraudScore, faceVerification),
-        verificationDate: new Date().toISOString()
+        overallStatus,
+        verificationDate: new Date().toISOString(),
+        dbRecord: dbVerification
       };
     } catch (error) {
+      await trx.rollback();
       console.error('Error in full KYC verification:', error);
       return {
         success: false,

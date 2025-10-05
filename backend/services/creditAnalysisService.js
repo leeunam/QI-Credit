@@ -1,5 +1,7 @@
 const axios = require('axios');
 const config = require('../config/config');
+const { CreditAnalysis, User } = require('../../database/models/indexModel');
+const db = require('../config/database');
 
 // Determine if we're running in mock mode
 const isMockMode = config.QITECH_MOCK_MODE === 'true';
@@ -400,6 +402,45 @@ class CreditAnalysisService {
   // Generate unique request ID
   generateRequestId() {
     return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  async analyzeCreditRequest(userId, requestedAmount, termDays) {
+    const userData = await db('users').where('id', userId).first();
+    if (!userData) throw new Error('User not found');
+    
+    const user = new User(userData);
+    
+    if (!user.canBorrow()) {
+      throw new Error('User is not eligible for credit');
+    }
+    
+    const analysis = new CreditAnalysis({
+      user_id: userId,
+      requested_amount: requestedAmount,
+      term_days: termDays,
+      status: 'PENDING'
+    });
+    
+    const validation = analysis.validate();
+    if (!validation.isValid) {
+      throw new Error(`Invalid analysis: ${validation.errors.join(', ')}`);
+    }
+    
+    // Simular análise (em produção seria API QI Tech)
+    const riskLevel = this.calculateRisk(user.credit_score, requestedAmount);
+    const approvedAmount = Math.min(requestedAmount, user.monthly_income * 5);
+    
+    analysis.approve(approvedAmount, riskLevel, 'Approved by automated system');
+    
+    await db('credit_analyses').insert(analysis.toDatabase());
+    
+    return analysis;
+  }
+  
+  calculateRisk(creditScore, amount) {
+    if (creditScore >= 750 && amount <= 50000) return 'LOW';
+    if (creditScore >= 650 && amount <= 100000) return 'MEDIUM';
+    return 'HIGH';
   }
 }
 
