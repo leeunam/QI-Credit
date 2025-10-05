@@ -19,6 +19,7 @@ import CreditRequest from "./pages/CreditRequest";
 import SmartContractPage from "./pages/SmartContractPage";
 import PaymentPage from "./pages/PaymentPage";
 import Profile from "./pages/Profile";
+import ClientDashboard from "./pages/ClientDashboard";
 
 const queryClient = new QueryClient();
 
@@ -37,7 +38,7 @@ const App = () => (
               }}
             >
               <Routes>
-                <Route path="/menu" element={<Index />} />
+                <Route path="/" element={<Index />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/KYC" element={<Index />} />
                 <Route path="/wallet" element={<Wallet />} />
@@ -48,6 +49,7 @@ const App = () => (
                 <Route path="/pagamentos/:id" element={<PaymentPage />} />
                 <Route path="/onboarding" element={<Onboarding />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/client-dashboard" element={<ClientDashboard />} />
                 {/* Investor Module Routes */}
                 <Route path="/marketplace" element={<Marketplace />} />
                 <Route path="/investor-dashboard" element={<InvestorDashboard />} />

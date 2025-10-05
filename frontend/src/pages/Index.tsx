@@ -13,10 +13,10 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Header } from '../components/layout/Header';
+import { Header2 } from '../components/layout/Header2'; // Importação extra!
 import { HeroSection } from '../components/sections/HeroSection';
 import { FeaturesSection } from '../components/sections/FeaturesSection';
 import { AuthModal } from '../components/modals/AuthModal';
-import Dashboard from './Dashboard';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -25,12 +25,6 @@ const Index = () => {
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // If user is logged in, show dashboard
-  if (user) {
-    return <Dashboard />;
-  }
-
-  // Handlers for AuthModal
   const handleLoginClick = () => {
     setAuthMode('login');
     setAuthModalOpen(true);
@@ -46,7 +40,6 @@ const Index = () => {
     setAuthModalOpen(true);
   };
 
-  // Features do sistema KYC
   const kycFeatures = [
     {
       icon: FileText,
@@ -70,7 +63,6 @@ const Index = () => {
     },
   ];
 
-  // Features do sistema de investimentos
   const investmentFeatures = [
     {
       icon: DollarSign,
@@ -91,13 +83,18 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header e Mobile Menu */}
-      <Header
-        onLoginClick={handleLoginClick}
-        onSignupClick={handleSignupClick}
-        onMobileMenuClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-      />
-      {mobileMenuOpen && (
+      {/* Troca dinâmica do header */}
+      {user ? (
+        <Header2 />
+      ) : (
+        <Header
+          onLoginClick={handleLoginClick}
+          onSignupClick={handleSignupClick}
+          onMobileMenuClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        />
+      )}
+
+      {mobileMenuOpen && !user && (
         <div className="md:hidden bg-card border-b px-4 py-4 space-y-4">
           <a href="#features" className="block text-body-3 text-muted-foreground hover:text-foreground">
             Recursos
