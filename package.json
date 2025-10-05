@@ -9,12 +9,29 @@
     "start:backend": "cd backend && npm run dev",
     "start:frontend": "cd frontend && npm run dev",
     "dev": "node scripts/start.js",
-    "setup": "npm install && cd backend && npm install && cd ../frontend && npm install && cd .. && npm run db:migrate",
+    "setup:env": "node scripts/setup-env.js",
+    "setup": "npm install && cd backend && npm install && cd ../frontend && npm install && cd ../blockchain && npm install && cd .. && npm run db:migrate",
+    "build": "cd frontend && npm run build && cd ../backend && echo 'Backend build complete'",
+    "lint": "cd frontend && npm run lint && cd ../backend && npm run lint",
+    "type-check": "cd frontend && npm run type-check",
+    "clean": "cd frontend && npm run clean && rm -rf node_modules/.cache",
+    "test": "cd backend && npm test && cd ../blockchain && npm test",
+    "deploy:contracts": "cd blockchain && npm run deploy:sepolia",
     "db:migrate": "cd backend && npx knex migrate:latest --knexfile ../database/knexfile.js",
     "db:rollback": "cd backend && npx knex migrate:rollback --knexfile ../database/knexfile.js",
     "db:status": "cd backend && npx knex migrate:status --knexfile ../database/knexfile.js"
   },
-  "keywords": [],
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "keywords": [
+    "fintech",
+    "credit",
+    "blockchain",
+    "p2p",
+    "lending"
+  ],
   "author": "QI Credit Team",
   "license": "MIT",
   "devDependencies": {

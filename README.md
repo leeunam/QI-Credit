@@ -208,61 +208,200 @@ erDiagram
 
 ---
 
-## Quick Start
+## Guia de Instalação Completo
 
-### Requisitos
+### Pré-requisitos
+
+Antes de começar, certifique-se de ter instalado:
+
+| Requisito | Versão Mínima | Como Instalar |
+|-----------|---------------|---------------|
+| **Node.js** | 18.x ou superior | [nodejs.org](https://nodejs.org/) |
+| **npm** | 9.x ou superior | Vem com Node.js |
+| **Git** | Qualquer versão recente | [git-scm.com](https://git-scm.com/) |
+| **PostgreSQL** (opcional) | 14.x ou superior | [postgresql.org](https://www.postgresql.org/) ou usar Docker |
+
+#### Verificar Instalações
 
 ```bash
-node >= 18
-npm  >= 9
-docker (opcional para Postgres)
+# Verifique as versões instaladas
+node --version    # deve mostrar v18.x.x ou superior
+npm --version     # deve mostrar 9.x.x ou superior  
+git --version     # qualquer versão recente
 ```
 
-### Clonar e Instalar
+### Passo 1: Clonar o Repositório
 
 ```bash
-git clone <repo>
+# Clone o projeto
+git clone <repo-url>
 cd QI-Credit
-cp .env.example .env
-npm run setup:env   # cria .env a partir do .env.example
-npm run setup       # instala todas as dependências (root + workspaces)
-```
-### Configurar Ambiente
 
-Após rodar `npm run setup:env`, edite o arquivo `.env` criado com suas configurações:
-
-```bash
-# Editar configurações essenciais
-nano .env  # ou seu editor preferido
-
-# Principais variáveis para ajustar:
-# DB_PASSWORD=sua_senha_postgres
-# QITECH_API_KEY=sua_chave_qitech
-# JWT_SECRET=seu_jwt_secret
-# PRIVATE_KEY=sua_private_key_blockchain
+# Verifique se está no diretório correto
+ls -la # deve mostrar package.json, README.md, etc.
 ```
 
-### Rodar Ambiente
+### Passo 2: Configurar Ambiente
 
 ```bash
-npm run dev     # orquestra frontend + backend
-cd backend && npm start # backend isolado
-cd frontend && npm run dev # frontend isolado
+# 1. Criar arquivo de configuração
+npm run setup:env
+
+# 2. Editar configurações (escolha seu editor preferido)
+nano .env          # Editor nano (Linux/Mac)
+# ou
+code .env          # VS Code
+# ou
+vim .env           # Vim
 ```
 
-### Scripts Principais
+**Configurações importantes no .env:**
 
 ```bash
-npm start        # start principal
-npm run dev      # modo desenvolvimento
-npm run build    # build frontend/backend
-npm run lint     # lint
-npm run type-check
+# Banco de Dados - Configure sua senha PostgreSQL
+DB_PASSWORD=sua_senha_aqui
+
+# Desenvolvimento - Deixe como true para testes
+QITECH_MOCK_MODE=true
+BLOCKCHAIN_MOCK_MODE=true
+
+# Produção - Configure apenas quando necessário
+QITECH_API_KEY=sua_chave_qitech
+PRIVATE_KEY=sua_private_key_blockchain
+```
+
+### Passo 3: InstalarDependências
+
+```bash
+# Instala todas as dependências (pode demorar alguns minutos)
+npm run setup
+
+# Se der erro, tente instalar separadamente:
+npm install                    # Dependências raiz
+cd backend && npm install     # Dependências backend  
+cd ../frontend && npm install # Dependências frontend
+cd ../blockchain && npm install # Dependências blockchain
+cd ..                         # Voltar para raiz
+```
+
+### Passo 4: Configurar Banco de Dados
+
+#### Opção A: PostgreSQL Local
+
+```bash
+# 1. Instale PostgreSQL se não tiver
+# Ubuntu/Debian:
+sudo apt update && sudo apt install postgresql postgresql-contrib
+
+# macOS (Homebrew):
+brew install postgresql
+brew services start postgresql
+
+# 2. Criar banco e usuário
+sudo -u postgres psql
+CREATE DATABASE qicredit_db;
+CREATE USER postgres WITH ENCRYPTED PASSWORD 'password';
+GRANT ALL PRIVILEGES ON DATABASE qicredit_db TO postgres;
+\q
+
+# 3. Executar migrações
+npm run db:migrate
+```
+
+#### Opção B: Docker
+
+```bash
+# 1. Criar e iniciar container PostgreSQL
+docker run --name postgres-qicredit \
+  -e POSTGRES_DB=qicredit_db \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=password \
+  -p 5432:5432 \
+  -d postgres:14
+
+# 2. Aguardar container inicializar (30 segundos)
+sleep 30
+
+# 3. Executar migrações
+npm run db:migrate
+```
+
+### Passo 5: Executar o Projeto
+
+```bash
+# Inicia frontend e backend simultaneamente
+npm run dev
+
+# Ou execute separadamente:
+npm run start:backend  # Backend na porta 3000
+npm run start:frontend # Frontend na porta 8080
+```
+
+**Pronto! Acesse:**
+- **Frontend**: http://localhost:8080
+- **Backend API**: http://localhost:3000
+
+### Scripts Disponíveis
+
+| Comando | Descrição |
+|---------|-----------|
+| `npm run setup:env` | Cria .env a partir do .env.example |
+| `npm run setup` | Instalação completa (dependências + migrações) |
+| `npm start` | Inicia aplicação completa |
+| `npm run dev` | Modo desenvolvimento com hot-reload |
+| `npm run build` | Build de produção |
+| `npm test` | Executa todos os testes |
+| `npm run lint` | Verifica qualidade do código |
+| `npm run clean` | Limpa cache e arquivos temporários |
+
+### Resolução de Problemas
+
+### 🐛 Resolução de Problemas
+
+**Problemas comuns e soluções rápidas:**
+
+#### PostgreSQL não conecta
+```bash
+# Docker (recomendado):
+docker run --name postgres-qicredit -e POSTGRES_DB=qicredit_db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres:14
+
+# Sistema local:
+sudo systemctl start postgresql  # Linux
+brew services start postgresql   # macOS
+```
+
+#### Portas ocupadas
+```bash
+# Verificar portas em uso
+netstat -tulpn | grep :3000
+netstat -tulpn | grep :8080
+
+# Matar processo se necessário
+kill -9 PID
+```
+
+#### Dependências com erro
+```bash
 npm run clean
-npm run setup:env    # cria .env do .env.example
-npm run setup        # instalação completa (env + deps)
-npm run test         # testes (backend + blockchain)
-npm run deploy:contracts  # deploy dos smart contracts
+npm run setup
+```
+
+**📋 Para problemas mais complexos, consulte o [Guia Completo de Troubleshooting](docs/troubleshooting.md)**
+
+### Configurações de Produção
+
+Para ambiente de produção, configure:
+
+```bash
+# No arquivo .env
+NODE_ENV=production
+QITECH_MOCK_MODE=false
+BLOCKCHAIN_MOCK_MODE=false
+
+# Configure as chaves reais:
+QITECH_API_KEY=sua_chave_api_real
+JWT_SECRET=gere_um_secret_forte
+PRIVATE_KEY=sua_private_key_real
 ```
 
 ---
