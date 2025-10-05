@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 const PAGES = [
-    { label: 'Início', to: '/menu', icon: '🏠' },
+    { label: 'Início', to: '/', icon: '🏠' },
     { label: 'Dashboard', to: '/dashboard', icon: '📊' },
     { label: 'Carteira', to: '/wallet', icon: '💰' },
     { label: 'KYC', to: '/onboarding', icon: '🛂' },
@@ -81,7 +81,7 @@ export const Header2: React.FC<Header2Props> = ({
                     <div className="flex h-16 items-center justify-between">
 
                         {/* Logo com gradiente */}
-                        <div className="flex items-center cursor-pointer group" onClick={() => navigate('/menu')}>
+                        <div className="flex items-center cursor-pointer group" onClick={() => navigate('/')}>
                             <img
                                 src="public/images/QI Credit.png"
                                 alt="Logo QI Credit"

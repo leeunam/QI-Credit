@@ -32,33 +32,11 @@ const log = {
   success: (msg) => console.log(`${colors.green}✅ ${msg}${colors.reset}`),
   error: (msg) => console.log(`${colors.red}❌ ${msg}${colors.reset}`),
   warning: (msg) => console.log(`${colors.yellow}⚠️  ${msg}${colors.reset}`),
-  title: (msg) => console.log(`\n${colors.bold}${colors.cyan}${msg}${colors.reset}\n`),
+  title: (msg) =>
+    console.log(`\n${colors.bold}${colors.cyan}${msg}${colors.reset}\n`),
 };
 
-// Quick environment validation
-function validateEnvironment() {
-  log.info('Validando ambiente...');
-
-  const requiredVars = [
-    'SUPABASE_URL',
-    'SUPABASE_SERVICE_ROLE_KEY',
-    'DB_HOST',
-    'DB_USER',
-    'DB_PASSWORD',
-    'DB_NAME',
-  ];
-
-  const missing = requiredVars.filter(v => !process.env[v]);
-
-  if (missing.length > 0) {
-    log.error(`Variáveis de ambiente faltando: ${missing.join(', ')}`);
-    log.warning('Execute: cp .env.example .env e configure as variáveis');
-    return false;
-  }
-
-  log.success('Ambiente validado');
-  return true;
-}
+// Quick environment validation (removed - now inline)
 
 // Start backend
 function startBackend() {
@@ -113,7 +91,7 @@ function startBackend() {
 // Start frontend
 function startFrontend() {
   return new Promise((resolve) => {
-    log.info('Iniciando frontend na porta 5173...');
+    log.info('Iniciando frontend na porta 8080...');
 
     const frontend = spawn('npm', ['run', 'dev'], {
       cwd: path.resolve(__dirname, '../frontend'),
@@ -166,9 +144,13 @@ async function main() {
 
   log.title('🚀 QI CREDIT - INICIANDO SISTEMA');
 
-  // Validate environment
-  if (!validateEnvironment()) {
-    process.exit(1);
+  // Quick validation - only essential vars
+  log.info('Validando configuração básica...');
+  if (!process.env.DB_HOST || !process.env.DB_USER || !process.env.DB_NAME) {
+    log.warning('Algumas variáveis de ambiente não estão configuradas.');
+    log.info('Execute: npm run setup:env para configurar o ambiente');
+  } else {
+    log.success('Configuração básica encontrada');
   }
 
   console.log();
@@ -182,7 +164,7 @@ async function main() {
     log.success('Sistema iniciado com sucesso!');
     console.log();
     log.info(`Backend:  ${colors.cyan}http://localhost:3000${colors.reset}`);
-    log.info(`Frontend: ${colors.cyan}http://localhost:5173${colors.reset}`);
+    log.info(`Frontend: ${colors.cyan}http://localhost:8080${colors.reset}`);
     console.log();
     log.warning('Pressione Ctrl+C para parar o servidor');
     console.log();

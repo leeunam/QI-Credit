@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { CustomButton } from '../../components/ui/button-variants';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
-import { useToast } from '../../hooks/use-toast';
-import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, Eye, EyeOff, Briefcase, UserCircle } from 'lucide-react';
 
 interface SignupFormProps {
   onSwitchToLogin: () => void;
@@ -15,6 +16,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [userType, setUserType] = useState<'investor' | 'client'>('client');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { signup, isLoading } = useAuth();
@@ -50,7 +52,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
       return;
     }
 
-    const success = await signup(name, email, password);
+    const success = await signup(name, email, password, userType);
     
     if (success) {
       toast({
@@ -106,6 +108,59 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
           />
         </div>
 
+        {/* User Type Selection */}
+        <div className="space-y-3">
+          <Label className="text-body-4 font-medium">
+            Tipo de conta
+          </Label>
+          <RadioGroup
+            value={userType}
+            onValueChange={(value) => setUserType(value as 'investor' | 'client')}
+            disabled={isLoading}
+            className="grid grid-cols-2 gap-4"
+          >
+            <div className="relative">
+              <RadioGroupItem
+                value="client"
+                id="client"
+                className="peer sr-only"
+              />
+              <Label
+                htmlFor="client"
+                className="flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-muted bg-background p-4 hover:bg-accent hover:border-primary/50 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer transition-all duration-200"
+              >
+                <UserCircle className="h-8 w-8 text-muted-foreground peer-data-[state=checked]:text-primary" />
+                <div className="text-center">
+                  <div className="font-semibold text-body-3">Cliente</div>
+                  <div className="text-body-5 text-muted-foreground mt-1">
+                    Solicitar crédito
+                  </div>
+                </div>
+              </Label>
+            </div>
+
+            <div className="relative">
+              <RadioGroupItem
+                value="investor"
+                id="investor"
+                className="peer sr-only"
+              />
+              <Label
+                htmlFor="investor"
+                className="flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-muted bg-background p-4 hover:bg-accent hover:border-primary/50 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer transition-all duration-200"
+              >
+                <Briefcase className="h-8 w-8 text-muted-foreground peer-data-[state=checked]:text-primary" />
+                <div className="text-center">
+                  <div className="font-semibold text-body-3">Investidor</div>
+                  <div className="text-body-5 text-muted-foreground mt-1">
+                    Investir em contratos
+                  </div>
+                </div>
+              </Label>
+            </div>
+          </RadioGroup>
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="password" className="text-body-4 font-medium">
             Senha
@@ -156,10 +211,9 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
           </div>
         </div>
 
-        <CustomButton
+        <Button
           type="submit"
-          variant="gradient"
-          className="w-full h-12 text-body-3 font-semibold"
+          className="w-full h-12 text-body-3 font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
           disabled={isLoading}
         >
           {isLoading ? (
@@ -170,13 +224,13 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin }) => {
           ) : (
             'Criar conta'
           )}
-        </CustomButton>
+        </Button>
 
         <div className="text-center">
           <button
             type="button"
             onClick={onSwitchToLogin}
-            className="text-body-4 text-secondary hover:text-secondary/80 transition-colors"
+            className="text-body-4 text-primary hover:text-primary/80 transition-colors"
             disabled={isLoading}
           >
             Já tem uma conta? <span className="font-semibold">Faça login</span>
