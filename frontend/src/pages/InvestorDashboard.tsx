@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, Wallet, AlertTriangle, DollarSign } from 'lucide-react';
+import { TrendingUp, Wallet, AlertTriangle, DollarSign, ArrowLeft } from 'lucide-react';
 import {
   getInvestorDashboardData,
   type InvestorDashboardData,
 } from '@/services/investorService';
 import { toast } from 'sonner';
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { Header2 } from '@/components/layout/Header2';
 
 /**
  * Componente de Métrica - Card exibindo uma métrica principal
@@ -88,7 +89,7 @@ function InvestmentCard({ investment }: InvestmentCardProps) {
   const isDelayed = investment.status === 'Atrasado';
   const handleClick = () => {
     navigate("/pagamentos/payment-001");
-  };  
+  };
 
   return (
     <Card onClick={handleClick} className="border border-border bg-card hover:shadow-md transition-shadow">
@@ -211,12 +212,18 @@ export default function InvestorDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      <Header2/>
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-6 desktop-sm:py-8">
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">
+                <Link to="/dashboard">
+                  <Button variant="outline" size="sm">
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Voltar
+                  </Button>
+                </Link>
                 <Wallet className="w-8 h-8 text-primary" />
                 <h1 className="text-heading-1 text-card-foreground">
                   Acompanhamento de Investimentos

@@ -1,4 +1,3 @@
-import React from 'react';
 import { CheckCircle, BarChart3, Users, Smartphone, Cloud, Lock } from 'lucide-react';
 
 export const FeaturesSection: React.FC = () => {

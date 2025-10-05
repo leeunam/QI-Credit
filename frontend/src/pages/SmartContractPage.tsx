@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { SmartContractStatus } from "../components/contract/SmartContractStatus";
 import { smartContractService, SmartContract } from "../services/smartContractMock";
+import { Header2 } from '@/components/layout/Header2';
 
 const SmartContractPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -120,12 +121,12 @@ const SmartContractPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      <Header2 />
       <div className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link to="/">
+              <Link to="/dashboard">
                 <Button variant="outline" size="sm">
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Voltar

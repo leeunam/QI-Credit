@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { CustomButton } from '../../components/ui/button-variants';
 import { Input } from '../../components/ui/input';
@@ -122,14 +122,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
           </button>
         </div>
       </form>
-
-      <div className="mt-6 p-4 bg-muted rounded-lg">
-        <p className="text-body-4 text-muted-foreground text-center">
-          <strong>Credenciais de teste:</strong><br />
-          Email: user@example.com<br />
-          Senha: 123456
-        </p>
-      </div>
     </div>
   );
 };

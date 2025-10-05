@@ -1,118 +1,176 @@
-import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Wallet, TrendingUp, DollarSign, Calendar } from "lucide-react";
-import { PaymentInstallments } from "@/components/payment/PaymentInstallments";
-import { PaymentHistory } from "@/components/payment/PaymentHistory";
-import { 
-  PaymentContract, 
-  PaymentHistory as PaymentHistoryType, 
-  getPaymentContract, 
-  getPaymentHistory 
-} from "../services/paymentMock";
+import { useState, useEffect } from 'react';
+import { Header2 } from '@/components/layout/Header2';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  getPaymentContract,
+  getPaymentHistory,
+  payInstallment,
+  anticipateInstallment,
+  getAvailablePaymentMethods,
+  type PaymentContract,
+  type PaymentHistory,
+  type Installment,
+} from '@/services/paymentMock';
+import {
+  CreditCard,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  TrendingUp,
+  History,
+  Zap,
+} from 'lucide-react';
 
-const PaymentPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+export default function Payments() {
   const [contract, setContract] = useState<PaymentContract | null>(null);
-  const [history, setHistory] = useState<PaymentHistoryType[]>([]);
+  const [history, setHistory] = useState<PaymentHistory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [historyLoading, setHistoryLoading] = useState(true);
+  const [selectedInstallment, setSelectedInstallment] = useState<Installment | null>(null);
+  const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
+  const [selectedMethod, setSelectedMethod] = useState<string>('');
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [isAnticipationDialogOpen, setIsAnticipationDialogOpen] = useState(false);
+  const [processing, setProcessing] = useState(false);
   const { toast } = useToast();
 
-  const loadContractData = async () => {
-    if (!id) return;
+  useEffect(() => {
+    loadData();
+  }, []);
 
+  const loadData = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const contractData = await getPaymentContract(id);
-      
-      if (contractData) {
-        setContract(contractData);
-      } else {
-        toast({
-          title: "Contrato não encontrado",
-          description: "O contrato solicitado não existe ou foi removido.",
-          variant: "destructive",
-        });
-      }
+      const [contractData, historyData, methods] = await Promise.all([
+        getPaymentContract('payment-001'),
+        getPaymentHistory('payment-001'),
+        getAvailablePaymentMethods(),
+      ]);
+      setContract(contractData);
+      setHistory(historyData);
+      setPaymentMethods(methods);
     } catch (error) {
       toast({
-        title: "Erro ao carregar contrato",
-        description: "Não foi possível carregar os dados do contrato.",
-        variant: "destructive",
+        title: 'Erro',
+        description: 'Não foi possível carregar os dados.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const loadPaymentHistory = async () => {
-    if (!id) return;
+  const handlePayment = async () => {
+    if (!selectedInstallment || !selectedMethod) return;
 
+    setProcessing(true);
     try {
-      setHistoryLoading(true);
-      const historyData = await getPaymentHistory(id);
-      setHistory(historyData);
-    } catch (error) {
-      toast({
-        title: "Erro ao carregar histórico",
-        description: "Não foi possível carregar o histórico de pagamentos.",
-        variant: "destructive",
-      });
+      const result = await payInstallment(selectedInstallment.id, selectedMethod);
+      if (result.success) {
+        toast({
+          title: 'Pagamento realizado!',
+          description: `Parcela ${selectedInstallment.installmentNumber} paga com sucesso.`,
+        });
+        setIsPaymentDialogOpen(false);
+        loadData();
+      } else {
+        toast({
+          title: 'Erro no pagamento',
+          description: result.error,
+          variant: 'destructive',
+        });
+      }
     } finally {
-      setHistoryLoading(false);
+      setProcessing(false);
     }
   };
 
-  useEffect(() => {
-    loadContractData();
-    loadPaymentHistory();
-  }, [id]);
+  const handleAnticipation = async () => {
+    if (!selectedInstallment) return;
 
-  const handlePaymentSuccess = () => {
-    // Reload contract data to get updated payment status
-    loadContractData();
-    loadPaymentHistory();
+    setProcessing(true);
+    try {
+      const result = await anticipateInstallment(selectedInstallment.id);
+      if (result.success) {
+        toast({
+          title: 'Antecipação realizada!',
+          description: `Desconto de ${formatCurrency(result.discount || 0)} aplicado.`,
+        });
+        setIsAnticipationDialogOpen(false);
+        loadData();
+      } else {
+        toast({
+          title: 'Erro na antecipação',
+          description: result.error,
+          variant: 'destructive',
+        });
+      }
+    } finally {
+      setProcessing(false);
+    }
   };
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
-      currency: 'BRL'
-    }).format(amount);
+      currency: 'BRL',
+    }).format(value);
   };
 
-  const getProgressPercentage = () => {
-    if (!contract) return 0;
-    return (contract.paidAmount / contract.totalAmount) * 100;
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
-  const getPendingInstallments = () => {
-    if (!contract) return 0;
-    return contract.installments.filter(i => i.status === 'pending' || i.status === 'overdue').length;
+  const getStatusBadge = (status: Installment['status']) => {
+    const variants = {
+      paid: { variant: 'default' as const, icon: CheckCircle2, label: 'Pago', color: 'text-green-600' },
+      pending: { variant: 'secondary' as const, icon: Clock, label: 'Pendente', color: 'text-yellow-600' },
+      overdue: { variant: 'destructive' as const, icon: AlertCircle, label: 'Atrasado', color: 'text-red-600' },
+      anticipated: { variant: 'default' as const, icon: Zap, label: 'Antecipado', color: 'text-purple-600' },
+    };
+
+    const config = variants[status];
+    const Icon = config.icon;
+
+    return (
+      <Badge variant={config.variant} className="gap-1">
+        <Icon className="h-3 w-3" />
+        {config.label}
+      </Badge>
+    );
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[hsl(var(--bg-light))] p-4 mobile:p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <div className="flex items-center gap-4">
-            <Skeleton className="h-10 w-10" />
-            <Skeleton className="h-8 w-64" />
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        <Header2 />
+        <div className="container mx-auto px-4 py-8">
+          <Skeleton className="h-8 w-64 mb-6" />
+          <div className="grid gap-6 md:grid-cols-3 mb-8">
+            <Skeleton className="h-32" />
+            <Skeleton className="h-32" />
+            <Skeleton className="h-32" />
           </div>
-          
-          <div className="grid gap-6 mobile:grid-cols-1 lg:grid-cols-4">
-            <Skeleton className="h-32 lg:col-span-1" />
-            <Skeleton className="h-32 lg:col-span-1" />
-            <Skeleton className="h-32 lg:col-span-1" />
-            <Skeleton className="h-32 lg:col-span-1" />
-          </div>
-          
           <Skeleton className="h-96" />
         </div>
       </div>
@@ -121,180 +179,286 @@ const PaymentPage: React.FC = () => {
 
   if (!contract) {
     return (
-      <div className="min-h-screen bg-[hsl(var(--bg-light))] p-4 mobile:p-6">
-        <div className="max-w-7xl mx-auto">
-          <Card className="bg-[hsl(var(--text-light))] border-[hsl(var(--color-tertiary))]">
-            <CardContent className="py-8">
-              <div className="text-center space-y-4">
-                <Wallet className="w-16 h-16 text-[hsl(var(--color-tertiary))] mx-auto" />
-                <h2 className="text-h2 font-display font-semibold text-[hsl(var(--text-dark))]">
-                  Contrato não encontrado
-                </h2>
-                <p className="text-body-2 text-[hsl(var(--color-tertiary))]">
-                  O contrato solicitado não existe ou foi removido.
-                </p>
-                <Button 
-                  onClick={() => window.history.back()}
-                  className="bg-[hsl(var(--color-primary))] text-[hsl(var(--text-light))] hover:brightness-95"
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Voltar
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        <Header2 />
+        <div className="container mx-auto px-4 py-8">
+          <p className="text-muted-foreground">Contrato não encontrado.</p>
         </div>
       </div>
     );
   }
 
+  const progressPercentage = (contract.paidAmount / contract.totalAmount) * 100;
+
   return (
-    <div className="min-h-screen bg-[hsl(var(--bg-light))] p-4 mobile:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => window.history.back()}
-            className="border-[hsl(var(--color-tertiary))] hover:bg-[hsl(var(--color-tertiary))] hover:text-[hsl(var(--text-light))]"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <div>
-            <h1 className="text-h1 font-display font-bold text-[hsl(var(--text-dark))]">
-              Pagamentos e Acompanhamento
-            </h1>
-            <p className="text-body-2 text-[hsl(var(--color-tertiary))] mt-1">
-              {contract.title}
-            </p>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <Header2 />
+      
+      <main className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent mb-2">
+            Pagamentos
+          </h1>
+          <p className="text-muted-foreground">{contract.title}</p>
         </div>
 
         {/* Summary Cards */}
-        <div className="grid gap-4 mobile:grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="bg-[hsl(var(--text-light))] border-[hsl(var(--color-tertiary))]">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <DollarSign className="w-8 h-8 text-[hsl(var(--color-primary))]" />
-                <div>
-                  <p className="text-body-4 text-[hsl(var(--color-tertiary))]">Valor Total</p>
-                  <p className="text-body-2 font-semibold text-[hsl(var(--text-dark))]">
-                    {formatCurrency(contract.totalAmount)}
-                  </p>
-                </div>
-              </div>
+        <div className="grid gap-6 md:grid-cols-3 mb-8">
+          <Card className="bg-gradient-to-br from-card to-card/50 border-border/50 backdrop-blur">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <CreditCard className="h-4 w-4" />
+                Valor Total
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                {formatCurrency(contract.totalAmount)}
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-[hsl(var(--text-light))] border-[hsl(var(--color-tertiary))]">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <TrendingUp className="w-8 h-8 text-[hsl(var(--color-success))]" />
-                <div>
-                  <p className="text-body-4 text-[hsl(var(--color-tertiary))]">Valor Pago</p>
-                  <p className="text-body-2 font-semibold text-[hsl(var(--text-dark))]">
-                    {formatCurrency(contract.paidAmount)}
-                  </p>
-                </div>
-              </div>
+          <Card className="bg-gradient-to-br from-card to-card/50 border-border/50 backdrop-blur">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                Valor Pago
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-green-600">
+                {formatCurrency(contract.paidAmount)}
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-[hsl(var(--text-light))] border-[hsl(var(--color-tertiary))]">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <Wallet className="w-8 h-8 text-[hsl(var(--color-warning))]" />
-                <div>
-                  <p className="text-body-4 text-[hsl(var(--color-tertiary))]">Valor Restante</p>
-                  <p className="text-body-2 font-semibold text-[hsl(var(--text-dark))]">
-                    {formatCurrency(contract.remainingAmount)}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-[hsl(var(--text-light))] border-[hsl(var(--color-tertiary))]">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <Calendar className="w-8 h-8 text-[hsl(var(--color-info))]" />
-                <div>
-                  <p className="text-body-4 text-[hsl(var(--color-tertiary))]">Parcelas Pendentes</p>
-                  <p className="text-body-2 font-semibold text-[hsl(var(--text-dark))]">
-                    {getPendingInstallments()}
-                  </p>
-                </div>
-              </div>
+          <Card className="bg-gradient-to-br from-card to-card/50 border-border/50 backdrop-blur">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-yellow-600" />
+                Valor Restante
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-yellow-600">
+                {formatCurrency(contract.remainingAmount)}
+              </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Progress Bar */}
-        <Card className="bg-[hsl(var(--text-light))] border-[hsl(var(--color-tertiary))]">
-          <CardContent className="p-6">
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-body-3 font-medium text-[hsl(var(--text-dark))]">
-                  Progresso do Pagamento
-                </span>
-                <Badge className="bg-[hsl(var(--color-info))] text-[hsl(var(--text-light))] text-body-4">
-                  {getProgressPercentage().toFixed(1)}%
-                </Badge>
-              </div>
-              <div className="w-full bg-[hsl(var(--bg-light))] rounded-full h-3">
-                <div 
-                  className="bg-[hsl(var(--color-success))] h-3 rounded-full transition-all duration-300"
-                  style={{ width: `${getProgressPercentage()}%` }}
-                />
-              </div>
-            </div>
+        {/* Progress */}
+        <Card className="mb-8 bg-gradient-to-br from-card to-card/50 border-border/50 backdrop-blur">
+          <CardHeader>
+            <CardTitle>Progresso do Pagamento</CardTitle>
+            <CardDescription>
+              {progressPercentage.toFixed(1)}% pago
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Progress value={progressPercentage} className="h-3" />
           </CardContent>
         </Card>
 
-        {/* Tabs */}
-        <Tabs defaultValue="installments" className="space-y-6">
-          <TabsList className="bg-[hsl(var(--bg-light))] p-1">
-            <TabsTrigger 
-              value="installments"
-              className="data-[state=active]:bg-[hsl(var(--text-light))] data-[state=active]:text-[hsl(var(--text-dark))]"
-            >
-              Parcelas
-            </TabsTrigger>
-            <TabsTrigger 
-              value="history"
-              className="data-[state=active]:bg-[hsl(var(--text-light))] data-[state=active]:text-[hsl(var(--text-dark))]"
-            >
-              Histórico
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="installments">
-            <PaymentInstallments 
-              installments={contract.installments}
-              onPaymentSuccess={handlePaymentSuccess}
-            />
-          </TabsContent>
-
-          <TabsContent value="history">
-            {historyLoading ? (
-              <Card className="bg-[hsl(var(--text-light))] border-[hsl(var(--color-tertiary))]">
-                <CardContent className="p-6">
-                  <div className="space-y-4">
-                    <Skeleton className="h-8 w-64" />
-                    <Skeleton className="h-32 w-full" />
-                    <Skeleton className="h-32 w-full" />
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Installments */}
+          <Card className="bg-gradient-to-br from-card to-card/50 border-border/50 backdrop-blur">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Parcelas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {contract.installments.map((installment) => (
+                  <div
+                    key={installment.id}
+                    className="p-4 rounded-lg border border-border bg-background/50 hover:bg-background/80 transition-colors"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <p className="font-semibold">Parcela {installment.installmentNumber}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Vencimento: {formatDate(installment.dueDate)}
+                        </p>
+                        {installment.paymentDate && (
+                          <p className="text-sm text-muted-foreground">
+                            Pago em: {formatDate(installment.paymentDate)}
+                          </p>
+                        )}
+                      </div>
+                      {getStatusBadge(installment.status)}
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <p className="text-xl font-bold">{formatCurrency(installment.amount)}</p>
+                      
+                      {installment.status === 'pending' && (
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              setSelectedInstallment(installment);
+                              setIsPaymentDialogOpen(true);
+                            }}
+                          >
+                            Pagar
+                          </Button>
+                          {installment.anticipationDiscount && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedInstallment(installment);
+                                setIsAnticipationDialogOpen(true);
+                              }}
+                            >
+                              <Zap className="h-4 w-4 mr-1" />
+                              Antecipar
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {installment.anticipationDiscount && installment.status === 'pending' && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Desconto para antecipação: {formatCurrency(installment.anticipationDiscount)}
+                      </p>
+                    )}
                   </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <PaymentHistory history={history} />
-            )}
-          </TabsContent>
-        </Tabs>
-      </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Payment History */}
+          <Card className="bg-gradient-to-br from-card to-card/50 border-border/50 backdrop-blur">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <History className="h-5 w-5" />
+                Histórico de Pagamentos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {history.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    Nenhum pagamento realizado ainda.
+                  </p>
+                ) : (
+                  history.map((payment) => (
+                    <div
+                      key={payment.id}
+                      className="p-4 rounded-lg border border-border bg-background/50"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <p className="font-semibold">{formatCurrency(payment.amount)}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatDate(payment.paymentDate)}
+                          </p>
+                        </div>
+                        <Badge variant={payment.type === 'anticipation' ? 'default' : 'secondary'}>
+                          {payment.type === 'anticipation' ? 'Antecipação' : 'Pagamento'}
+                        </Badge>
+                      </div>
+                      <div className="text-xs text-muted-foreground space-y-1">
+                        <p>Método: {payment.method}</p>
+                        <p>ID: {payment.transactionId}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+
+      {/* Payment Dialog */}
+      <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Realizar Pagamento</DialogTitle>
+            <DialogDescription>
+              Parcela {selectedInstallment?.installmentNumber} - {formatCurrency(selectedInstallment?.amount || 0)}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Método de Pagamento</label>
+              <Select value={selectedMethod} onValueChange={setSelectedMethod}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o método" />
+                </SelectTrigger>
+                <SelectContent>
+                  {paymentMethods.map((method) => (
+                    <SelectItem key={method} value={method}>
+                      {method}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handlePayment} disabled={!selectedMethod || processing}>
+              {processing ? 'Processando...' : 'Confirmar Pagamento'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Anticipation Dialog */}
+      <Dialog open={isAnticipationDialogOpen} onOpenChange={setIsAnticipationDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Antecipar Pagamento</DialogTitle>
+            <DialogDescription>
+              Parcela {selectedInstallment?.installmentNumber}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="p-4 rounded-lg bg-muted">
+              <p className="text-sm text-muted-foreground mb-1">Valor Original</p>
+              <p className="text-2xl font-bold">{formatCurrency(selectedInstallment?.amount || 0)}</p>
+            </div>
+            
+            <div className="p-4 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
+              <p className="text-sm text-muted-foreground mb-1">Desconto</p>
+              <p className="text-2xl font-bold text-green-600">
+                - {formatCurrency(selectedInstallment?.anticipationDiscount || 0)}
+              </p>
+            </div>
+            
+            <div className="p-4 rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
+              <p className="text-sm text-muted-foreground mb-1">Valor Final</p>
+              <p className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                {formatCurrency(
+                  (selectedInstallment?.amount || 0) - (selectedInstallment?.anticipationDiscount || 0)
+                )}
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAnticipationDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleAnticipation} disabled={processing}>
+              {processing ? 'Processando...' : 'Confirmar Antecipação'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
-};
-
-export default PaymentPage;
+}

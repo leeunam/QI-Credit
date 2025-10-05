@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { Header2 } from '@/components/layout/Header2';
 import { ContractViewer } from '../components/contract/ContractViewer';
 import { SignatureModal } from '../components/contract/SignatureModal';
 import { contractService, Contract } from '../services/contractMock';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const ContractPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,7 +24,7 @@ const ContractPage = () => {
 
   const loadContract = async () => {
     if (!id) return;
-    
+
     try {
       setIsLoading(true);
       const contractData = await contractService.getContract(id);
@@ -38,7 +42,7 @@ const ContractPage = () => {
 
   const handleSignRequest = () => {
     if (!contract) return;
-    
+
     const unsignedParties = contract.parties.filter(party => !party.signed);
     if (unsignedParties.length === 0) {
       toast({
@@ -146,19 +150,27 @@ const ContractPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      <Header2 />
       <header className="bg-white border-b border-border">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-h2 font-display">Contrato Digital</h1>
+              <div className="flex items-center gap-3 mb-2">
+                <Link to="/dashboard">
+                  <Button variant="outline" size="sm">
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Voltar
+                  </Button>
+                </Link>
+                <h1 className="text-h2 font-display">Contrato Digital</h1>
+              </div>
               <p className="text-body-3 text-muted-foreground">
                 Visualização e assinatura de contratos eletrônicos
               </p>
             </div>
             <div className="text-right">
               <p className="text-body-4 text-muted-foreground">ID do Contrato</p>
-              <p className="text-body-2 font-mono">{contract.id}</p>
+              <p className="text-body-2 font-mono">{contract?.id}</p>
             </div>
           </div>
         </div>

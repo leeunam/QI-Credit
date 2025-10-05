@@ -18,6 +18,7 @@ import Wallet from "./pages/Wallet";
 import CreditRequest from "./pages/CreditRequest";
 import SmartContractPage from "./pages/SmartContractPage";
 import PaymentPage from "./pages/PaymentPage";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -36,7 +37,8 @@ const App = () => (
               }}
             >
               <Routes>
-                <Route path="/" element={<Index />} />
+                <Route path="/menu" element={<Index />} />
+                <Route path="/profile" element={<Profile />} />
                 <Route path="/KYC" element={<Index />} />
                 <Route path="/wallet" element={<Wallet />} />
                 <Route path="/credit-request" element={<CreditRequest />} />
