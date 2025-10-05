@@ -589,25 +589,6 @@ contract SimpleEscrow {
 
 ---
 
-## Verificação Final
-
-Após a instalação, verifique se tudo está funcionando:
-
-```bash
-# 1. Verificar se os serviços sobem sem erro
-npm run dev
-
-# 2. Testar endpoints básicos
-curl http://localhost:3000/health
-curl http://localhost:8080
-
-# 3. Verificar logs (não deve ter erros críticos)
-# Backend deve mostrar: "Server running on port 3000"
-# Frontend deve mostrar: "Local: http://localhost:8080"
-```
-
----
-
 ## 🙏 Agradecimentos
 
 Um agradecimento especial à equipe da **Poli Júnior** e à **QI TECH** pela oportunidade!
