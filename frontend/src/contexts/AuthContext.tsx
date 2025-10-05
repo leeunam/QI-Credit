@@ -4,12 +4,13 @@ interface User {
   id: string;
   email: string;
   name: string;
+  userType?: 'investor' | 'client';
 }
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (name: string, email: string, password: string) => Promise<boolean>;
+  signup: (name: string, email: string, password: string, userType: 'investor' | 'client') => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
 }
